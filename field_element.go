@@ -31,18 +31,33 @@ func (e *FieldElement) Ne(other *FieldElement) bool {
 	return e.Num != other.Num || e.Prime != other.Prime
 }
 
-func (e *FieldElement) Add(other *FieldElement) (*FieldElement, error) {
-	if e.Prime != other.Prime {
-		return nil, fmt.Errorf("cannot add two numbers in different Fields")
+type CalcFunc func(*FieldElement) error
+
+func (e *FieldElement) Calc(calcFuncs ...CalcFunc) error {
+	for _, f := range calcFuncs {
+		if err := f(e); err != nil {
+			return err
+		}
 	}
-	num := (e.Num + other.Num) % e.Prime
-	return &FieldElement{Num: num, Prime: e.Prime}, nil
+	return nil
 }
 
-func (e FieldElement) Sub(other *FieldElement) (*FieldElement, error) {
-	if e.Prime != other.Prime {
-		return nil, fmt.Errorf("cannot sub two numbers in different Fields")
+func Add(other *FieldElement) CalcFunc {
+	return func(e *FieldElement) error {
+		if e.Prime != other.Prime {
+			return fmt.Errorf("cannot add two numbers in different Fields")
+		}
+		e.Num = (e.Num + other.Num) % e.Prime
+		return nil
 	}
-	num := ((e.Num - other.Num) % e.Prime + e.Prime) % e.Prime
-	return &FieldElement{Num: num, Prime: e.Prime}, nil
+}
+
+func Sub(other *FieldElement) CalcFunc {
+	return func(e *FieldElement) error {
+		if e.Prime != other.Prime {
+			return fmt.Errorf("cannot sub two numbers in different Fields")
+		}
+		e.Num = ((e.Num - other.Num) % e.Prime + e.Prime) % e.Prime
+		return nil
+	}
 }
