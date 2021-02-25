@@ -27,6 +27,22 @@ func (e *FieldElement) Eq(other *FieldElement) bool {
 	return e.Num == other.Num && e.Prime == other.Prime
 }
 
-func (e FieldElement) Ne(other *FieldElement) bool {
+func (e *FieldElement) Ne(other *FieldElement) bool {
 	return e.Num != other.Num || e.Prime != other.Prime
+}
+
+func (e *FieldElement) Add(other *FieldElement) (*FieldElement, error) {
+	if e.Prime != other.Prime {
+		return nil, fmt.Errorf("cannot add two numbers in different Fields")
+	}
+	num := (e.Num + other.Num) % e.Prime
+	return &FieldElement{Num: num, Prime: e.Prime}, nil
+}
+
+func (e FieldElement) Sub(other *FieldElement) (*FieldElement, error) {
+	if e.Prime != other.Prime {
+		return nil, fmt.Errorf("cannot sub two numbers in different Fields")
+	}
+	num := ((e.Num - other.Num) % e.Prime + e.Prime) % e.Prime
+	return &FieldElement{Num: num, Prime: e.Prime}, nil
 }
