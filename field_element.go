@@ -28,7 +28,7 @@ func (e *FieldElement) Eq(other *FieldElement) bool {
 }
 
 func (e *FieldElement) Ne(other *FieldElement) bool {
-	return !e.Eq(other)
+	return e.Num != other.Num || e.Prime != other.Prime
 }
 
 type CalcFunc func(*FieldElement) error
