@@ -65,7 +65,7 @@ func TestFieldElement_Eq(t *testing.T) {
 		},
 		{
 			&FieldElement{7, 13},
-			&FieldElement{7, 12},
+			&FieldElement{7, 11},
 			false,
 		},
 	}
@@ -97,7 +97,7 @@ func TestFieldElement_Ne(t *testing.T) {
 		},
 		{
 			&FieldElement{7, 13},
-			&FieldElement{7, 12},
+			&FieldElement{7, 11},
 			true,
 		},
 	}
