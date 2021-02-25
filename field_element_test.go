@@ -8,13 +8,13 @@ import (
 )
 
 func TestNewFieldElement_Succeeds(t *testing.T) {
-	actual, err := NewFieldElement(1, 10)
+	actual, err := NewFieldElement(0, 11)
 	if err != nil {
 		t.Error(err)
 	}
 	expected := &FieldElement{
-		Num: 1,
-		Prime: 10,
+		Num: 0,
+		Prime: 11,
 	}
 
 	if diff := cmp.Diff(actual, expected); diff != "" {
