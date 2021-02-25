@@ -26,3 +26,7 @@ func (e *FieldElement) String() string {
 func (e *FieldElement) Eq(other *FieldElement) bool {
 	return e.Num == other.Num && e.Prime == other.Prime
 }
+
+func (e FieldElement) Ne(other *FieldElement) bool {
+	return e.Num != other.Num || e.Prime != other.Prime
+}
