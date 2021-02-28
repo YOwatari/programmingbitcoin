@@ -1,4 +1,4 @@
-package main
+package ecc
 
 import (
 	"fmt"
@@ -12,10 +12,7 @@ func TestNewFieldElement_Succeeds(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	expected := &FieldElement{
-		Num: 0,
-		Prime: 11,
-	}
+	expected := &FieldElement{0, 11}
 
 	if diff := cmp.Diff(actual, expected); diff != "" {
 		t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
@@ -23,8 +20,8 @@ func TestNewFieldElement_Succeeds(t *testing.T) {
 }
 
 func TestNewFieldElement_Fails(t *testing.T) {
-	cases := []struct{
-		num int
+	cases := []struct {
+		num   int
 		prime int
 	}{
 		{
@@ -48,11 +45,11 @@ func TestNewFieldElement_Fails(t *testing.T) {
 }
 
 func TestFieldElement_Eq(t *testing.T) {
-	cases := []struct{
-		a *FieldElement
-		b *FieldElement
+	cases := []struct {
+		a        *FieldElement
+		b        *FieldElement
 		expected bool
-	} {
+	}{
 		{
 			&FieldElement{7, 13},
 			&FieldElement{7, 13},
@@ -80,11 +77,11 @@ func TestFieldElement_Eq(t *testing.T) {
 }
 
 func TestFieldElement_Ne(t *testing.T) {
-	cases := []struct{
-		a *FieldElement
-		b *FieldElement
+	cases := []struct {
+		a        *FieldElement
+		b        *FieldElement
 		expected bool
-	} {
+	}{
 		{
 			&FieldElement{7, 13},
 			&FieldElement{7, 13},
@@ -115,24 +112,19 @@ func TestAdd(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
 		actual := &FieldElement{0, 1}
 		if err := actual.Calc(Add(&FieldElement{0, 3})); err == nil {
-			t.Errorf("should fail to add two numbers in different Fields")
+			t.Error("should fail to add two numbers in different Fields")
 		}
 	})
 
-	cases := []struct{
+	cases := []struct {
 		actual   *FieldElement
 		cals     []CalcFunc
 		expected *FieldElement
-	} {
+	}{
 		{
-			&FieldElement{44, 57},
-			[]CalcFunc{Add(&FieldElement{33, 57})},
-			&FieldElement{20, 57},
-		},
-		{
-			&FieldElement{17, 57},
-			[]CalcFunc{Add(&FieldElement{42, 57}), Add(&FieldElement{49, 57})},
-			&FieldElement{51, 57},
+			&FieldElement{7, 13},
+			[]CalcFunc{Add(&FieldElement{12, 13})},
+			&FieldElement{6, 13},
 		},
 	}
 
@@ -154,24 +146,85 @@ func TestFieldElement_Sub(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
 		actual := &FieldElement{0, 1}
 		if err := actual.Calc(Sub(&FieldElement{0, 3})); err == nil {
-			t.Errorf("should fail to sub two numbers in different Fields")
+			t.Error("should fail to sub two numbers in different Fields")
 		}
 	})
 
-	cases := []struct{
-		actual *FieldElement
-		cals []CalcFunc
+	cases := []struct {
+		actual   *FieldElement
+		cals     []CalcFunc
 		expected *FieldElement
-	} {
+	}{
 		{
-			&FieldElement{9, 57},
-			[]CalcFunc{Sub(&FieldElement{29, 57})},
-			&FieldElement{37, 57},
+			&FieldElement{7, 13},
+			[]CalcFunc{Sub(&FieldElement{6, 13})},
+			&FieldElement{1, 13},
 		},
 		{
-			&FieldElement{52, 57},
-			[]CalcFunc{Sub(&FieldElement{30, 57}), Sub(&FieldElement{38, 57})},
-			&FieldElement{41, 57},
+			&FieldElement{7, 13},
+			[]CalcFunc{Sub(&FieldElement{8, 13})},
+			&FieldElement{12, 13},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if err := c.actual.Calc(c.cals...); err != nil {
+				t.Fatal(err)
+			}
+
+			if c.actual.Eq(c.expected) != true {
+				diff := cmp.Diff(c.actual, c.expected)
+				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestMul(t *testing.T) {
+	t.Run("Fails", func(t *testing.T) {
+		actual := &FieldElement{0, 1}
+		if err := actual.Calc(Mul(&FieldElement{0, 3})); err == nil {
+			t.Error("should fail to multiply two numbers in different Fields")
+		}
+	})
+
+	cases := []struct {
+		actual   *FieldElement
+		cals     []CalcFunc
+		expected *FieldElement
+	}{
+		{
+			&FieldElement{3, 13},
+			[]CalcFunc{Mul(&FieldElement{12, 13})},
+			&FieldElement{10, 13},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if err := c.actual.Calc(c.cals...); err != nil {
+				t.Fatal(err)
+			}
+
+			if c.actual.Eq(c.expected) != true {
+				diff := cmp.Diff(c.actual, c.expected)
+				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestPow(t *testing.T) {
+	cases := []struct {
+		actual   *FieldElement
+		cals     []CalcFunc
+		expected *FieldElement
+	}{
+		{
+			&FieldElement{3, 13},
+			[]CalcFunc{Pow(3)},
+			&FieldElement{1, 13},
 		},
 	}
 
