@@ -1,19 +1,21 @@
-package ecc
+package ecc_test
 
 import (
 	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/YOwatari/programmingbitcoin/ecc"
 )
 
 func TestNewFieldElement(t *testing.T) {
 	t.Run("Succeeds", func(t *testing.T) {
-		actual, err := NewFieldElement(0, 11)
+		actual, err := ecc.NewFieldElement(0, 11)
 		if err != nil {
 			t.Error(err)
 		}
-		expected := &FieldElement{0, 11}
+		expected, _ := ecc.NewFieldElement(0, 11)
 
 		if diff := cmp.Diff(actual, expected); diff != "" {
 			t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
@@ -36,7 +38,7 @@ func TestNewFieldElement(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Fails_%d", i), func(t *testing.T) {
-			got, err := NewFieldElement(c.num, c.prime)
+			got, err := ecc.NewFieldElement(c.num, c.prime)
 			if err == nil || got != nil {
 				t.Error("should fail")
 			}
@@ -46,23 +48,23 @@ func TestNewFieldElement(t *testing.T) {
 
 func TestFieldElement_Eq(t *testing.T) {
 	cases := []struct {
-		a        *FieldElement
-		b        *FieldElement
+		a        *ecc.FieldElement
+		b        *ecc.FieldElement
 		expected bool
 	}{
 		{
-			&FieldElement{7, 13},
-			&FieldElement{7, 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
 			true,
 		},
 		{
-			&FieldElement{7, 13},
-			&FieldElement{6, 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 6, Prime: 13},
 			false,
 		},
 		{
-			&FieldElement{7, 13},
-			&FieldElement{7, 11},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 7, Prime: 11},
 			false,
 		},
 	}
@@ -78,23 +80,23 @@ func TestFieldElement_Eq(t *testing.T) {
 
 func TestFieldElement_Ne(t *testing.T) {
 	cases := []struct {
-		a        *FieldElement
-		b        *FieldElement
+		a        *ecc.FieldElement
+		b        *ecc.FieldElement
 		expected bool
 	}{
 		{
-			&FieldElement{7, 13},
-			&FieldElement{7, 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
 			false,
 		},
 		{
-			&FieldElement{7, 13},
-			&FieldElement{6, 13},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 6, Prime: 13},
 			true,
 		},
 		{
-			&FieldElement{7, 13},
-			&FieldElement{7, 11},
+			&ecc.FieldElement{Num: 7, Prime: 13},
+			&ecc.FieldElement{Num: 7, Prime: 11},
 			true,
 		},
 	}
@@ -110,32 +112,34 @@ func TestFieldElement_Ne(t *testing.T) {
 
 func TestAdd(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		actual := &FieldElement{0, 1}
-		if err := actual.Calc(Add(&FieldElement{0, 3})); err == nil {
+		a, err := ecc.NewFieldElement(0, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := a.Add(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
 			t.Error("should fail to add two numbers in different Fields")
 		}
 	})
 
 	cases := []struct {
-		actual   *FieldElement
-		cals     []CalcFieldElementFunc
-		expected *FieldElement
+		a   *ecc.FieldElement
+		expected *ecc.FieldElement
 	}{
 		{
-			&FieldElement{7, 13},
-			[]CalcFieldElementFunc{Add(&FieldElement{12, 13})},
-			&FieldElement{6, 13},
+			(&ecc.FieldElement{Num: 7, Prime: 13}).Add(&ecc.FieldElement{Num: 12, Prime: 13}),
+			&ecc.FieldElement{Num: 6, Prime: 13},
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := c.actual.Calc(c.cals...); err != nil {
+			actual, err := c.a.Calc()
+			if err != nil {
 				t.Fatal(err)
 			}
 
-			if c.actual.Eq(c.expected) != true {
-				diff := cmp.Diff(c.actual, c.expected)
+			if actual.Eq(c.expected) != true {
+				diff := cmp.Diff(actual, c.expected)
 				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 			}
 		})
@@ -144,37 +148,38 @@ func TestAdd(t *testing.T) {
 
 func TestFieldElement_Sub(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		actual := &FieldElement{0, 1}
-		if err := actual.Calc(Sub(&FieldElement{0, 3})); err == nil {
+		a, err := ecc.NewFieldElement(0, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := a.Sub(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
 			t.Error("should fail to sub two numbers in different Fields")
 		}
 	})
 
 	cases := []struct {
-		actual   *FieldElement
-		cals     []CalcFieldElementFunc
-		expected *FieldElement
+		a   *ecc.FieldElement
+		expected *ecc.FieldElement
 	}{
 		{
-			&FieldElement{7, 13},
-			[]CalcFieldElementFunc{Sub(&FieldElement{6, 13})},
-			&FieldElement{1, 13},
+			(&ecc.FieldElement{Num: 7, Prime: 13}).Sub(&ecc.FieldElement{Num: 6, Prime: 13}),
+			&ecc.FieldElement{Num: 1, Prime: 13},
 		},
 		{
-			&FieldElement{7, 13},
-			[]CalcFieldElementFunc{Sub(&FieldElement{8, 13})},
-			&FieldElement{12, 13},
+			(&ecc.FieldElement{Num: 7, Prime: 13}).Sub(&ecc.FieldElement{Num: 8, Prime: 13}),
+			&ecc.FieldElement{Num: 12, Prime: 13},
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := c.actual.Calc(c.cals...); err != nil {
+			actual, err := c.a.Calc()
+			if err != nil {
 				t.Fatal(err)
 			}
 
-			if c.actual.Eq(c.expected) != true {
-				diff := cmp.Diff(c.actual, c.expected)
+			if actual.Eq(c.expected) != true {
+				diff := cmp.Diff(actual, c.expected)
 				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 			}
 		})
@@ -183,32 +188,34 @@ func TestFieldElement_Sub(t *testing.T) {
 
 func TestMul(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		actual := &FieldElement{0, 1}
-		if err := actual.Calc(Mul(&FieldElement{0, 3})); err == nil {
+		actual, err := ecc.NewFieldElement(0, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := actual.Mul(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
 			t.Error("should fail to multiply two numbers in different Fields")
 		}
 	})
 
 	cases := []struct {
-		actual   *FieldElement
-		cals     []CalcFieldElementFunc
-		expected *FieldElement
+		a   *ecc.FieldElement
+		expected *ecc.FieldElement
 	}{
 		{
-			&FieldElement{3, 13},
-			[]CalcFieldElementFunc{Mul(&FieldElement{12, 13})},
-			&FieldElement{10, 13},
+			(&ecc.FieldElement{Num: 3, Prime: 13}).Mul(&ecc.FieldElement{Num: 12, Prime: 13}),
+			&ecc.FieldElement{Num: 10, Prime: 13},
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := c.actual.Calc(c.cals...); err != nil {
+			actual, err := c.a.Calc()
+			if err != nil {
 				t.Fatal(err)
 			}
 
-			if c.actual.Eq(c.expected) != true {
-				diff := cmp.Diff(c.actual, c.expected)
+			if actual.Eq(c.expected) != true {
+				diff := cmp.Diff(actual, c.expected)
 				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 			}
 		})
@@ -217,25 +224,24 @@ func TestMul(t *testing.T) {
 
 func TestPow(t *testing.T) {
 	cases := []struct {
-		actual   *FieldElement
-		cals     []CalcFieldElementFunc
-		expected *FieldElement
+		a   *ecc.FieldElement
+		expected *ecc.FieldElement
 	}{
 		{
-			&FieldElement{3, 13},
-			[]CalcFieldElementFunc{Pow(3)},
-			&FieldElement{1, 13},
+			(&ecc.FieldElement{Num: 3, Prime: 13}).Pow(3),
+			&ecc.FieldElement{Num: 1, Prime: 13},
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := c.actual.Calc(c.cals...); err != nil {
+			actual, err := c.a.Calc()
+			if err != nil {
 				t.Fatal(err)
 			}
 
-			if c.actual.Eq(c.expected) != true {
-				diff := cmp.Diff(c.actual, c.expected)
+			if actual.Eq(c.expected) != true {
+				diff := cmp.Diff(actual, c.expected)
 				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 			}
 		})
@@ -244,32 +250,34 @@ func TestPow(t *testing.T) {
 
 func TestDiv(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		actual := &FieldElement{0, 1}
-		if err := actual.Calc(Div(&FieldElement{0, 3})); err == nil {
+		a, err := ecc.NewFieldElement(0, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := a.Div(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
 			t.Error("should fail to division two numbers in different Fields")
 		}
 	})
 
 	cases := []struct {
-		actual   *FieldElement
-		cals     []CalcFieldElementFunc
-		expected *FieldElement
+		a   *ecc.FieldElement
+		expected *ecc.FieldElement
 	}{
 		{
-			&FieldElement{2, 19},
-			[]CalcFieldElementFunc{Div(&FieldElement{7, 19})},
-			&FieldElement{3, 19},
+			(&ecc.FieldElement{Num: 2, Prime: 19}).Div(&ecc.FieldElement{Num: 7, Prime: 19}),
+			&ecc.FieldElement{Num: 3, Prime: 19},
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			if err := c.actual.Calc(c.cals...); err != nil {
+			actual, err := c.a.Calc()
+			if err != nil {
 				t.Fatal(err)
 			}
 
-			if c.actual.Eq(c.expected) != true {
-				diff := cmp.Diff(c.actual, c.expected)
+			if actual.Eq(c.expected) != true {
+				diff := cmp.Diff(actual, c.expected)
 				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 			}
 		})

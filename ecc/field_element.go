@@ -7,6 +7,7 @@ import (
 type FieldElement struct {
 	Num   int
 	Prime int
+	Err   error
 }
 
 func NewFieldElement(num int, prime int) (*FieldElement, error) {
@@ -19,89 +20,73 @@ func NewFieldElement(num int, prime int) (*FieldElement, error) {
 	}, nil
 }
 
-func (e *FieldElement) String() string {
-	return fmt.Sprintf("FieldElement_%d(%d)", e.Prime, e.Num)
+func (elm *FieldElement) String() string {
+	return fmt.Sprintf("FieldElement_%d(%d)", elm.Prime, elm.Num)
 }
 
-func (e *FieldElement) Eq(other *FieldElement) bool {
-	return e.Num == other.Num && e.Prime == other.Prime
+func (elm *FieldElement) Eq(other *FieldElement) bool {
+	return elm.Num == other.Num && elm.Prime == other.Prime
 }
 
-func (e *FieldElement) Ne(other *FieldElement) bool {
-	return e.Num != other.Num || e.Prime != other.Prime
+func (elm *FieldElement) Ne(other *FieldElement) bool {
+	return elm.Num != other.Num || elm.Prime != other.Prime
 }
 
-type CalcFieldElementFunc func(*FieldElement) error
+func (elm *FieldElement) Calc() (*FieldElement, error) {
+	return elm, elm.Err
+}
 
-func (e *FieldElement) Calc(calcFuncs ...CalcFieldElementFunc) error {
-	for _, f := range calcFuncs {
-		if err := f(e); err != nil {
-			return err
-		}
+func (elm *FieldElement) Add(other *FieldElement) *FieldElement {
+	if elm.Prime != other.Prime {
+		elm.Err = fmt.Errorf("cannot add two numbers in different Fields")
+		return elm
 	}
-	return nil
+	elm.Num = (elm.Num + other.Num) % elm.Prime
+	return elm
 }
 
-func Add(other *FieldElement) CalcFieldElementFunc {
-	return func(elm *FieldElement) error {
-		if elm.Prime != other.Prime {
-			return fmt.Errorf("cannot add two numbers in different Fields")
-		}
-		elm.Num = (elm.Num + other.Num) % elm.Prime
-		return nil
+func (elm *FieldElement) Sub(other *FieldElement) *FieldElement {
+	if elm.Prime != other.Prime {
+		elm.Err = fmt.Errorf("cannot sub two numbers in different Fields")
+		return elm
 	}
+	elm.Num = ((elm.Num-other.Num)%elm.Prime + elm.Prime) % elm.Prime
+	return elm
 }
 
-func Sub(other *FieldElement) CalcFieldElementFunc {
-	return func(elm *FieldElement) error {
-		if elm.Prime != other.Prime {
-			return fmt.Errorf("cannot sub two numbers in different Fields")
-		}
-		elm.Num = ((elm.Num-other.Num)%elm.Prime + elm.Prime) % elm.Prime
-		return nil
+func (elm *FieldElement) Mul(other *FieldElement) *FieldElement {
+	if elm.Prime != other.Prime {
+		elm.Err = fmt.Errorf("cannot multiply two numbers in different Fields")
+		return elm
 	}
+	elm.Num = (elm.Num * other.Num) % elm.Prime
+	return elm
 }
 
-func Mul(other *FieldElement) CalcFieldElementFunc {
-	return func(elm *FieldElement) error {
-		if elm.Prime != other.Prime {
-			return fmt.Errorf("cannot multiply two numbers in different Fields")
-		}
-		elm.Num = (elm.Num * other.Num) % elm.Prime
-		return nil
-	}
-}
-
-func Pow(exponent int) CalcFieldElementFunc {
-	return func(elm *FieldElement) error {
-		e := (exponent + (elm.Prime - 1)) % (elm.Prime - 1) // 0, p-2
-		elm.Num = func(n int, exp int, mod int) int {
-			p := 1
-			for exp > 0 {
-				if exp&1 == 1 {
-					p = (p * n) % mod
-				}
-
-				n = (n * n) % mod
-				if n == 1 {
-					break
-				}
-				exp >>= 1
+func (elm *FieldElement) Pow(exp int) *FieldElement {
+	e := (exp + (elm.Prime - 1)) % (elm.Prime - 1) // 0, p-2
+	elm.Num = func(n int, exp int, mod int) int {
+		p := 1
+		for exp > 0 {
+			if exp&1 == 1 {
+				p = (p * n) % mod
 			}
-			return p
-		}(elm.Num, e, elm.Prime)
-		return nil
-	}
+
+			n = (n * n) % mod
+			if n == 1 {
+				break
+			}
+			exp >>= 1
+		}
+		return p
+	}(elm.Num, e, elm.Prime)
+	return elm
 }
 
-func Div(other *FieldElement) CalcFieldElementFunc {
-	return func(elm *FieldElement) error {
-		if elm.Prime != other.Prime {
-			return fmt.Errorf("cannot division two numbers in different Fields")
-		}
-		b := *other
-		b.Calc(Pow(b.Prime - 2))
-		elm.Calc(Mul(&b))
-		return nil
+func (elm *FieldElement) Div(other *FieldElement) *FieldElement {
+	if elm.Prime != other.Prime {
+		elm.Err = fmt.Errorf("cannot division two numbers in different Fields")
+		return elm
 	}
+	return elm.Mul(other.Pow(other.Prime - 2))
 }

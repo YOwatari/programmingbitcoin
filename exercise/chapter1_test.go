@@ -10,26 +10,26 @@ func ExampleChapter1_two() {
 	prime := 57
 	fmt.Printf("Prime: %d\n", prime)
 
-	a, _ := ecc.NewFieldElement(44, prime)
-	a.Calc(ecc.Add(&ecc.FieldElement{Num: 33, Prime: prime}))
+	a1, _ := ecc.NewFieldElement(44, prime)
+	a2, _ := ecc.NewFieldElement(33, prime)
+	a, _ := a1.Add(a2).Calc()
 	fmt.Printf("44 + 33 = %d\n", a.Num)
 
-	b, _ := ecc.NewFieldElement(9, prime)
-	b.Calc(ecc.Sub(&ecc.FieldElement{Num: 29, Prime: prime}))
+	b1, _ := ecc.NewFieldElement(9, prime)
+	b2, _ := ecc.NewFieldElement(29, prime)
+	b, _ := b1.Sub(b2).Calc()
 	fmt.Printf("9 - 29 = %d\n", b.Num)
 
-	c, _ := ecc.NewFieldElement(17, prime)
-	c.Calc(
-		ecc.Add(&ecc.FieldElement{Num: 42, Prime: prime}),
-		ecc.Add(&ecc.FieldElement{Num: 49, Prime: prime}),
-	)
+	c1, _ := ecc.NewFieldElement(17, prime)
+	c2, _ := ecc.NewFieldElement(42, prime)
+	c3, _ := ecc.NewFieldElement(49, prime)
+	c, _ := c1.Add(c2).Add(c3).Calc()
 	fmt.Printf("17 + 42 + 49 = %d\n", c.Num)
 
-	d, _ := ecc.NewFieldElement(52, prime)
-	d.Calc(
-		ecc.Sub(&ecc.FieldElement{Num: 30, Prime: prime}),
-		ecc.Sub(&ecc.FieldElement{Num: 38, Prime: prime}),
-	)
+	d1, _ := ecc.NewFieldElement(52, prime)
+	d2, _ := ecc.NewFieldElement(30, prime)
+	d3, _ := ecc.NewFieldElement(38, prime)
+	d, _ := d1.Sub(d2).Sub(d3).Calc()
 	fmt.Printf("52 - 30 - 38 = %d\n", d.Num)
 
 	// Output:
@@ -44,27 +44,23 @@ func ExampleChapter1_four() {
 	prime := 97
 	fmt.Printf("Prime: %d\n", prime)
 
-	a, _ := ecc.NewFieldElement(95, prime)
-	a.Calc(
-		ecc.Mul(&ecc.FieldElement{Num: 45, Prime: prime}),
-		ecc.Mul(&ecc.FieldElement{Num: 31, Prime: prime}),
-	)
+	a1, _ := ecc.NewFieldElement(95, prime)
+	a2, _ := ecc.NewFieldElement(45, prime)
+	a3, _ := ecc.NewFieldElement(31, prime)
+	a, _ := a1.Mul(a2).Mul(a3).Calc()
 	fmt.Printf("97 * 45 * 31 = %d\n", a.Num)
 
-	b, _ := ecc.NewFieldElement(17, prime)
-	b.Calc(
-		ecc.Mul(&ecc.FieldElement{Num: 13, Prime: prime}),
-		ecc.Mul(&ecc.FieldElement{Num: 19, Prime: prime}),
-		ecc.Mul(&ecc.FieldElement{Num: 44, Prime: prime}),
-	)
+	b1, _ := ecc.NewFieldElement(17, prime)
+	b2, _ := ecc.NewFieldElement(13, prime)
+	b3, _ := ecc.NewFieldElement(19, prime)
+	b4, _ := ecc.NewFieldElement(44, prime)
+	b, _ := b1.Mul(b2).Mul(b3).Mul(b4).Calc()
 	fmt.Printf("17 * 13 * 19 * 44 = %d\n", b.Num)
 
 	c1, _ := ecc.NewFieldElement(12, prime)
-	c1.Calc(ecc.Pow(7))
 	c2, _ := ecc.NewFieldElement(77, prime)
-	c2.Calc(ecc.Pow(49))
-	c1.Calc(ecc.Mul(c2))
-	fmt.Printf("12**7 * 77**49 = %d\n", c1.Num)
+	c, _ := c1.Pow(7).Mul(c2.Pow(49)).Calc()
+	fmt.Printf("12**7 * 77**49 = %d\n", c.Num)
 
 	// Output:
 	// Prime: 97
@@ -78,8 +74,9 @@ func ExampleChapter1_five() {
 	for _, k := range []int{1, 3, 7, 13, 18} {
 		result := make([]string, prime)
 		for i := 0; i < len(result); i++ {
-			n, _ := ecc.NewFieldElement(k, prime)
-			n.Calc(ecc.Mul(&ecc.FieldElement{Num: i, Prime: prime}))
+			n1, _ := ecc.NewFieldElement(k, prime)
+			n2, _ := ecc.NewFieldElement(i, prime)
+			n, _ := n1.Mul(n2).Calc()
 			result[i] = fmt.Sprintf("%02d", n.Num)
 		}
 		fmt.Printf("k=%02d [%v]\n", k, strings.Join(result, ", "))
@@ -99,7 +96,7 @@ func ExampleChapter1_seven() {
 		result := make([]string, 0)
 		for i := 1; i < p; i++ {
 			n, _ := ecc.NewFieldElement(i, p)
-			n.Calc(ecc.Pow(e))
+			n, _ = n.Pow(e).Calc()
 			result = append(result, fmt.Sprintf("%d", n.Num))
 		}
 		fmt.Printf("p=%02d [%v]\n", p, strings.Join(result, ", "))
