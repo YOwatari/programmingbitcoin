@@ -5,16 +5,16 @@ import (
 )
 
 type FieldElement struct {
-	Num int
+	Num   int
 	Prime int
 }
 
 func NewFieldElement(num int, prime int) (*FieldElement, error) {
 	if num >= prime || num < 0 {
-		return nil, fmt.Errorf("num %d not in field range 0 to %d", num, prime - 1)
+		return nil, fmt.Errorf("num %d not in field range 0 to %d", num, prime-1)
 	}
 	return &FieldElement{
-		Num: num,
+		Num:   num,
 		Prime: prime,
 	}, nil
 }
@@ -31,9 +31,9 @@ func (e *FieldElement) Ne(other *FieldElement) bool {
 	return e.Num != other.Num || e.Prime != other.Prime
 }
 
-type CalcFunc func(*FieldElement) error
+type CalcFieldElementFunc func(*FieldElement) error
 
-func (e *FieldElement) Calc(calcFuncs ...CalcFunc) error {
+func (e *FieldElement) Calc(calcFuncs ...CalcFieldElementFunc) error {
 	for _, f := range calcFuncs {
 		if err := f(e); err != nil {
 			return err
@@ -42,7 +42,7 @@ func (e *FieldElement) Calc(calcFuncs ...CalcFunc) error {
 	return nil
 }
 
-func Add(other *FieldElement) CalcFunc {
+func Add(other *FieldElement) CalcFieldElementFunc {
 	return func(elm *FieldElement) error {
 		if elm.Prime != other.Prime {
 			return fmt.Errorf("cannot add two numbers in different Fields")
@@ -52,17 +52,17 @@ func Add(other *FieldElement) CalcFunc {
 	}
 }
 
-func Sub(other *FieldElement) CalcFunc {
+func Sub(other *FieldElement) CalcFieldElementFunc {
 	return func(elm *FieldElement) error {
 		if elm.Prime != other.Prime {
 			return fmt.Errorf("cannot sub two numbers in different Fields")
 		}
-		elm.Num = ((elm.Num - other.Num) % elm.Prime + elm.Prime) % elm.Prime
+		elm.Num = ((elm.Num-other.Num)%elm.Prime + elm.Prime) % elm.Prime
 		return nil
 	}
 }
 
-func Mul(other *FieldElement) CalcFunc {
+func Mul(other *FieldElement) CalcFieldElementFunc {
 	return func(elm *FieldElement) error {
 		if elm.Prime != other.Prime {
 			return fmt.Errorf("cannot multiply two numbers in different Fields")
@@ -72,21 +72,21 @@ func Mul(other *FieldElement) CalcFunc {
 	}
 }
 
-func Pow(exponent int) CalcFunc {
+func Pow(exponent int) CalcFieldElementFunc {
 	return func(elm *FieldElement) error {
 		e := (exponent + (elm.Prime - 1)) % (elm.Prime - 1) // 0, p-2
-		elm.Num = func(n int, e int, m int) int {
+		elm.Num = func(n int, exp int, mod int) int {
 			p := 1
-			for e > 0 {
-				if e&1 == 1 {
-					p = (p * n) % m
+			for exp > 0 {
+				if exp&1 == 1 {
+					p = (p * n) % mod
 				}
 
-				n = (n * n) % m
+				n = (n * n) % mod
 				if n == 1 {
 					break
 				}
-				e >>= 1
+				exp >>= 1
 			}
 			return p
 		}(elm.Num, e, elm.Prime)
@@ -94,7 +94,7 @@ func Pow(exponent int) CalcFunc {
 	}
 }
 
-func Div(other *FieldElement) CalcFunc {
+func Div(other *FieldElement) CalcFieldElementFunc {
 	return func(elm *FieldElement) error {
 		if elm.Prime != other.Prime {
 			return fmt.Errorf("cannot division two numbers in different Fields")

@@ -7,19 +7,19 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestNewFieldElement_Succeeds(t *testing.T) {
-	actual, err := NewFieldElement(0, 11)
-	if err != nil {
-		t.Error(err)
-	}
-	expected := &FieldElement{0, 11}
+func TestNewFieldElement(t *testing.T) {
+	t.Run("Succeeds", func(t *testing.T) {
+		actual, err := NewFieldElement(0, 11)
+		if err != nil {
+			t.Error(err)
+		}
+		expected := &FieldElement{0, 11}
 
-	if diff := cmp.Diff(actual, expected); diff != "" {
-		t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
-	}
-}
+		if diff := cmp.Diff(actual, expected); diff != "" {
+			t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+		}
+	})
 
-func TestNewFieldElement_Fails(t *testing.T) {
 	cases := []struct {
 		num   int
 		prime int
@@ -35,7 +35,7 @@ func TestNewFieldElement_Fails(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+		t.Run(fmt.Sprintf("Fails_%d", i), func(t *testing.T) {
 			got, err := NewFieldElement(c.num, c.prime)
 			if err == nil || got != nil {
 				t.Error("should fail")
@@ -70,7 +70,7 @@ func TestFieldElement_Eq(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			if c.a.Eq(c.b) != c.expected {
-				t.Errorf("FieldElement.Eq: %#v, %#v expected: %t", c.a, c.b, c.expected)
+				t.Errorf("FieldElement.Eq: %#v, %#v, expected: %t", c.a, c.b, c.expected)
 			}
 		})
 	}
@@ -102,7 +102,7 @@ func TestFieldElement_Ne(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			if c.a.Ne(c.b) != c.expected {
-				t.Errorf("FieldElement.Ne: %#v, %#v expected: %t", c.a, c.b, c.expected)
+				t.Errorf("FieldElement.Ne: %#v, %#v, expected: %t", c.a, c.b, c.expected)
 			}
 		})
 	}
@@ -118,12 +118,12 @@ func TestAdd(t *testing.T) {
 
 	cases := []struct {
 		actual   *FieldElement
-		cals     []CalcFunc
+		cals     []CalcFieldElementFunc
 		expected *FieldElement
 	}{
 		{
 			&FieldElement{7, 13},
-			[]CalcFunc{Add(&FieldElement{12, 13})},
+			[]CalcFieldElementFunc{Add(&FieldElement{12, 13})},
 			&FieldElement{6, 13},
 		},
 	}
@@ -152,17 +152,17 @@ func TestFieldElement_Sub(t *testing.T) {
 
 	cases := []struct {
 		actual   *FieldElement
-		cals     []CalcFunc
+		cals     []CalcFieldElementFunc
 		expected *FieldElement
 	}{
 		{
 			&FieldElement{7, 13},
-			[]CalcFunc{Sub(&FieldElement{6, 13})},
+			[]CalcFieldElementFunc{Sub(&FieldElement{6, 13})},
 			&FieldElement{1, 13},
 		},
 		{
 			&FieldElement{7, 13},
-			[]CalcFunc{Sub(&FieldElement{8, 13})},
+			[]CalcFieldElementFunc{Sub(&FieldElement{8, 13})},
 			&FieldElement{12, 13},
 		},
 	}
@@ -191,12 +191,12 @@ func TestMul(t *testing.T) {
 
 	cases := []struct {
 		actual   *FieldElement
-		cals     []CalcFunc
+		cals     []CalcFieldElementFunc
 		expected *FieldElement
 	}{
 		{
 			&FieldElement{3, 13},
-			[]CalcFunc{Mul(&FieldElement{12, 13})},
+			[]CalcFieldElementFunc{Mul(&FieldElement{12, 13})},
 			&FieldElement{10, 13},
 		},
 	}
@@ -218,12 +218,12 @@ func TestMul(t *testing.T) {
 func TestPow(t *testing.T) {
 	cases := []struct {
 		actual   *FieldElement
-		cals     []CalcFunc
+		cals     []CalcFieldElementFunc
 		expected *FieldElement
 	}{
 		{
 			&FieldElement{3, 13},
-			[]CalcFunc{Pow(3)},
+			[]CalcFieldElementFunc{Pow(3)},
 			&FieldElement{1, 13},
 		},
 	}
@@ -252,12 +252,12 @@ func TestDiv(t *testing.T) {
 
 	cases := []struct {
 		actual   *FieldElement
-		cals     []CalcFunc
+		cals     []CalcFieldElementFunc
 		expected *FieldElement
 	}{
 		{
 			&FieldElement{2, 19},
-			[]CalcFunc{Div(&FieldElement{7, 19})},
+			[]CalcFieldElementFunc{Div(&FieldElement{7, 19})},
 			&FieldElement{3, 19},
 		},
 	}
