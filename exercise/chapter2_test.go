@@ -17,7 +17,7 @@ func ExampleChapter2_one()  {
 		{5, 7},
 	}
 	for _, p := range points {
-		_, err := ecc.NewPoint(p.x, p.y, 5, 7)
+		_, err := ecc.NewPoint(float64(p.x), float64(p.y), 5, 7)
 		fmt.Printf("(%d, %d): %t\n", p.x, p.y, err == nil)
 	}
 

@@ -8,25 +8,62 @@ import (
 type Point struct {
 	A int
 	B int
-	X int
-	Y int
+	X float64
+	Y float64
+	Err error
 }
 
-func NewPoint(x int, y int, a int , b int) (*Point, error) {
-	if int(math.Pow(float64(y), 2)) != int(math.Pow(float64(x), 3)) + a * x + b {
-		return nil, fmt.Errorf("(%d, %d) is not on the curve", x, y)
+func NewPoint(x float64, y float64, a int , b int) (*Point, error) {
+	p := &Point{a, b, math.Floor(x), math.Floor(y), nil}
+	if math.IsNaN(p.X) && math.IsNaN(p.Y) {
+		return p, nil
 	}
-	return &Point{a, b, x, y}, nil
+	if int(math.Pow(p.Y, 2)) != int(math.Pow(p.X, 3)) + p.A * int(p.X) + p.B {
+		return nil, fmt.Errorf("(%d, %d) is not on the curve", int(x), int(y))
+	}
+	return p, nil
 }
 
-func (p Point) String() string {
-	return fmt.Sprintf("Point(%d, %d)_%d_%d", p.X, p.Y, p.A, p.B)
+func (p *Point) String() string {
+	if math.IsNaN(p.X) {
+		return "Point(infinity)"
+	}
+	return fmt.Sprintf("Point(%d, %d)_%d_%d", int(p.X), int(p.Y), p.A, p.B)
 }
 
 func (p *Point) Eq(other *Point) bool {
+	if math.IsNaN(p.X) {
+		return math.IsNaN(other.X)
+	}
 	return p.X == other.X && p.Y == other.Y && p.A == other.A && p.B == other.B
 }
 
 func (p *Point) Ne(other *Point) bool {
-	return p.X != other.X || p.Y != other.Y || p.A != other.A || p.B != other.B
+	return !p.Eq(other)
+}
+
+func (p *Point) Calc() (*Point, error) {
+	return p, p.Err
+}
+
+func (p *Point) Add(other *Point) *Point {
+	if p.A != other.A || p.B != other.B {
+		p.Err = fmt.Errorf("points %s, %s are not on the same curve", p, other)
+		return p
+	}
+
+	if math.IsNaN(p.X) {
+		return other
+	}
+	if math.IsNaN(other.X) {
+		return p
+	}
+
+	if p.X == other.X && p.Y != other.Y {
+		p.X = math.NaN()
+		p.Y = math.NaN()
+		return p
+	}
+
+	return p // TODO
 }

@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"fmt"
+	"math"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -13,7 +14,7 @@ func TestNewPoint(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		expected := &Point{5, 7, -1, -1}
+		expected, _ := NewPoint(-1, -1, 5, 7)
 
 		if diff := cmp.Diff(actual, expected); diff != "" {
 			t.Errorf("Point diff: (-got +want)\n%s", diff)
@@ -35,13 +36,13 @@ func TestPoint_Eq(t *testing.T) {
 		expected bool
 	} {
 		{
-			&Point{-1, -1, 5, 7},
-			&Point{-1, -1, 5, 7},
+			&Point{5, 7, -1, -1, nil},
+			&Point{5, 7, -1, -1, nil},
 			true,
 		},
 		{
-			&Point{-1, -1, 5, 7},
-			&Point{18, 57, 5, 7},
+			&Point{5, 7, -1, -1, nil},
+			&Point{5, 7, 18, 57, nil},
 			false,
 		},
 	}
@@ -62,13 +63,13 @@ func TestPoint_Ne(t *testing.T) {
 		expected bool
 	} {
 		{
-			&Point{-1, -1, 5, 7},
-			&Point{-1, -1, 5, 7},
+			&Point{5, 7, -1, -1, nil},
+			&Point{5, 7, -1, -1, nil},
 			false,
 		},
 		{
-			&Point{-1, -1, 5, 7},
-			&Point{18, 57, 5, 7},
+			&Point{5, 7, -1, -1, nil},
+			&Point{5, 7, 18, 57, nil},
 			true,
 		},
 	}
@@ -79,5 +80,35 @@ func TestPoint_Ne(t *testing.T) {
 				t.Errorf("Point.Ne: %#v, %#v, expected: %t", c.a, c.b, c.expected)
 			}
 		})
+	}
+}
+
+func TestPoint_Add_inf(t *testing.T) {
+	p1, _ := NewPoint(-1, -1, 5, 7)
+	p2, _ := NewPoint(-1, 1, 5, 7)
+	inf, _ := NewPoint(math.NaN(), math.NaN(), 5, 7)
+
+	a1, err := p1.Add(inf).Calc()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a1.Ne(p1) {
+		t.Errorf("p1 + inf: got: %v, want: %v", a1, p1)
+	}
+
+	a2, err := inf.Add(p2).Calc()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a2.Ne(p2) {
+		t.Errorf("inf + p2: got: %v, want: %v", a2, p2)
+	}
+
+	a3, err := p1.Add(p2).Calc()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a3.Ne(inf) {
+		t.Errorf("p1 + p2: got: %v, want: %v", a3, inf)
 	}
 }

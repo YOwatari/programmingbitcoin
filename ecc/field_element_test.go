@@ -110,7 +110,7 @@ func TestFieldElement_Ne(t *testing.T) {
 	}
 }
 
-func TestAdd(t *testing.T) {
+func TestFieldElement_Add(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
 		a, err := ecc.NewFieldElement(0, 1)
 		if err != nil {
@@ -186,7 +186,7 @@ func TestFieldElement_Sub(t *testing.T) {
 	}
 }
 
-func TestMul(t *testing.T) {
+func TestFieldElement_Mul(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
 		actual, err := ecc.NewFieldElement(0, 1)
 		if err != nil {
@@ -222,7 +222,7 @@ func TestMul(t *testing.T) {
 	}
 }
 
-func TestPow(t *testing.T) {
+func TestFieldElement_Pow(t *testing.T) {
 	cases := []struct {
 		a   *ecc.FieldElement
 		expected *ecc.FieldElement
@@ -248,7 +248,7 @@ func TestPow(t *testing.T) {
 	}
 }
 
-func TestDiv(t *testing.T) {
+func TestFieldElement_Div(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
 		a, err := ecc.NewFieldElement(0, 1)
 		if err != nil {
