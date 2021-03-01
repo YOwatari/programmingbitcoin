@@ -93,3 +93,15 @@ func Pow(exponent int) CalcFunc {
 		return nil
 	}
 }
+
+func Div(other *FieldElement) CalcFunc {
+	return func(elm *FieldElement) error {
+		if elm.Prime != other.Prime {
+			return fmt.Errorf("cannot division two numbers in different Fields")
+		}
+		b := *other
+		b.Calc(Pow(b.Prime - 2))
+		elm.Calc(Mul(&b))
+		return nil
+	}
+}

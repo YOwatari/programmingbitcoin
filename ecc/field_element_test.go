@@ -241,3 +241,37 @@ func TestPow(t *testing.T) {
 		})
 	}
 }
+
+func TestDiv(t *testing.T) {
+	t.Run("Fails", func(t *testing.T) {
+		actual := &FieldElement{0, 1}
+		if err := actual.Calc(Div(&FieldElement{0, 3})); err == nil {
+			t.Error("should fail to division two numbers in different Fields")
+		}
+	})
+
+	cases := []struct {
+		actual   *FieldElement
+		cals     []CalcFunc
+		expected *FieldElement
+	}{
+		{
+			&FieldElement{2, 19},
+			[]CalcFunc{Div(&FieldElement{7, 19})},
+			&FieldElement{3, 19},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			if err := c.actual.Calc(c.cals...); err != nil {
+				t.Fatal(err)
+			}
+
+			if c.actual.Eq(c.expected) != true {
+				diff := cmp.Diff(c.actual, c.expected)
+				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
