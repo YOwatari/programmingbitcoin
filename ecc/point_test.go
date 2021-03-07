@@ -83,32 +83,56 @@ func TestPoint_Ne(t *testing.T) {
 	}
 }
 
-func TestPoint_Add_inf(t *testing.T) {
-	p1, _ := NewPoint(-1, -1, 5, 7)
-	p2, _ := NewPoint(-1, 1, 5, 7)
-	inf, _ := NewPoint(math.NaN(), math.NaN(), 5, 7)
+func TestPoint_Add(t *testing.T) {
+	a := 5
+	b := 7
+	cases := []struct{
+		a *Point
+		b *Point
+		expected *Point
+	} {
+		{
+			&Point{a, b, -1, -1, nil},
+			&Point{a, b, math.NaN(), math.NaN(), nil},
+			&Point{a, b, -1, -1, nil},
+		},
+		{
+			&Point{a, b, math.NaN(), math.NaN(), nil},
+			&Point{a, b, -1, 1, nil},
+			&Point{a, b, -1, 1, nil},
+		},
+		{
+			&Point{a, b, -1, -1, nil},
+			&Point{a, b, -1, 1, nil},
+			&Point{a, b, math.NaN(), math.NaN(), nil},
+		},
+		{
+			&Point{a, b, 2, 5, nil},
+			&Point{a, b, -1, -1, nil},
+			&Point{a, b, 3, -7, nil},
+		},
+		{
+			&Point{a, b, -1, -1, nil},
+			&Point{a, b, -1, -1, nil},
+			&Point{a, b, 18, 77, nil},
+		},
+		{
+			&Point{a, b, -1, 0, nil},
+			&Point{a, b, -1, 0, nil},
+			&Point{a, b, math.NaN(), math.NaN(), nil},
+		},
+	}
 
-	a1, err := p1.Add(inf).Calc()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a1.Ne(p1) {
-		t.Errorf("p1 + inf: got: %v, want: %v", a1, p1)
-	}
-
-	a2, err := inf.Add(p2).Calc()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a2.Ne(p2) {
-		t.Errorf("inf + p2: got: %v, want: %v", a2, p2)
-	}
-
-	a3, err := p1.Add(p2).Calc()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if a3.Ne(inf) {
-		t.Errorf("p1 + p2: got: %v, want: %v", a3, inf)
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			actual, err := c.a.Add(c.b).Calc()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if actual.Ne(c.expected) {
+				diff := cmp.Diff(actual, c.expected)
+				t.Errorf("Point diff: (-got +want)\n%s", diff)
+			}
+		})
 	}
 }

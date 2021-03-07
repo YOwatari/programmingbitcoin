@@ -27,3 +27,23 @@ func ExampleChapter2_one()  {
 	// (18, 77): true
 	// (5, 7): false
 }
+
+func ExampleChapter2_four() {
+	p1, _ := ecc.NewPoint(2, 5, 5, 7)
+	p2, _ := ecc.NewPoint(-1, -1, 5, 7)
+	p, _ := p1.Add(p2).Calc()
+	fmt.Printf("%v + %v = %v", p1, p2, p)
+
+	// Output:
+	// Point(2, 5)_5_7 + Point(-1, -1)_5_7 = Point(3, -7)_5_7
+}
+
+func ExampleChapter2_six()  {
+	p1, _ := ecc.NewPoint(-1, -1, 5, 7)
+	p2, _ := ecc.NewPoint(-1, -1, 5, 7)
+	p, _ := p1.Add(p2).Calc()
+	fmt.Printf("%v + %v = %v", p1, p2, p)
+
+	// Output:
+	// Point(-1, -1)_5_7 + Point(-1, -1)_5_7 = Point(18, 77)_5_7
+}

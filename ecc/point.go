@@ -65,5 +65,19 @@ func (p *Point) Add(other *Point) *Point {
 		return p
 	}
 
-	return p // TODO
+	if p.Ne(other) {
+		s := (other.Y - p.Y) / (other.X - p.X)
+		x := s * s - p.X - other.X
+		y := s * (p.X - x) - p.Y
+		return &Point{p.A, p.B, x, y, nil}
+	}
+
+	if p.Eq(other) && p.Y == 0 {
+		return &Point{p.A, p.B, math.NaN(), math.NaN(), nil}
+	}
+
+	s := (3 * p.X * p.X + float64(p.A)) / (2 * p.Y)
+	x := s * s - 2 * p.X
+	y := s * (p.X - x) - p.Y
+	return &Point{p.A, p.B, x, y, nil}
 }
