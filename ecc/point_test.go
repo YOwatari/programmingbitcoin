@@ -17,57 +17,120 @@ func TestNewPoint(t *testing.T) {
 			NewExampleInteger(-1),
 			NewExampleInteger(5),
 			NewExampleInteger(7),
-	)
-	if err != nil {
-		t.Error(err)
-	}
-})
+		)
+		if err != nil {
+			t.Error(err)
+		}
+	})
 
-t.Run("Fails", func(t *testing.T) {
-	actual, err := ecc.NewPoint(
-		NewExampleInteger(-1),
-		NewExampleInteger(-2),
-		NewExampleInteger(5),
-		NewExampleInteger(7),
-	)
-	if err == nil || actual != nil {
-		t.Error("should be failed")
-	}
-})
+	t.Run("Fails", func(t *testing.T) {
+		actual, err := ecc.NewPoint(
+			NewExampleInteger(-1),
+			NewExampleInteger(-2),
+			NewExampleInteger(5),
+			NewExampleInteger(7),
+		)
+		if err == nil || actual != nil {
+			t.Error("should be failed")
+		}
+	})
+}
+
+func TestNewPoint_FieldElement(t *testing.T) {
+	prime := 223
+
+	t.Run("Succeeds", func(t *testing.T) {
+		a, _ := ecc.NewFieldElement(0, prime)
+		b, _ := ecc.NewFieldElement(7, prime)
+
+		for _, v := range []struct {
+			x int
+			y int
+		} {
+			{192, 105},
+			{17, 56},
+			{1, 193},
+		} {
+			x, err := ecc.NewFieldElement(v.x, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y, err := ecc.NewFieldElement(v.y, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = ecc.NewPoint(x, y, a, b)
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	})
+
+	t.Run("Fails", func(t *testing.T) {
+		a, _ := ecc.NewFieldElement(0, prime)
+		b, _ := ecc.NewFieldElement(7, prime)
+
+		for _, v := range []struct {
+			x int
+			y int
+		} {
+			{200, 119},
+			{42, 99},
+		} {
+			x, err := ecc.NewFieldElement(v.x, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y, err := ecc.NewFieldElement(v.y, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actual, err := ecc.NewPoint(x, y, a, b)
+			if err == nil || actual != nil {
+				t.Error(err)
+			}
+		}
+	})
 }
 
 func TestPoint_Eq(t *testing.T) {
 	a := NewExampleInteger(5)
 	b := NewExampleInteger(7)
 
-	cases := []struct{
-		a map[string]int
-		b map[string]int
+	type point struct {
+		x int
+		y int
+	}
+	cases := []struct {
+		a        point
+		b        point
 		expected bool
-	} {
+	}{
 		{
-			map[string]int{"x": -1, "y": -1},
-			map[string]int{"x": -1, "y": -1},
+			point{-1, -1},
+			point{-1, -1},
 			true,
 		},
 		{
-			map[string]int{"x": -1, "y": -1},
-			map[string]int{"x": 18, "y": 77},
+			point{-1, -1},
+			point{18, 77},
 			false,
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			x1 := NewExampleInteger(c.a["x"])
-			y1 := NewExampleInteger(c.a["y"])
+			x1 := NewExampleInteger(c.a.x)
+			y1 := NewExampleInteger(c.a.y)
 			actual1, err := ecc.NewPoint(x1, y1, a, b)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			x2 := NewExampleInteger(c.b["x"])
-			y2 := NewExampleInteger(c.b["y"])
+			x2 := NewExampleInteger(c.b.x)
+			y2 := NewExampleInteger(c.b.y)
 			actual2, err := ecc.NewPoint(x2, y2, a, b)
 			if err != nil {
 				t.Fatal(err)
@@ -84,34 +147,38 @@ func TestPoint_Ne(t *testing.T) {
 	a := NewExampleInteger(5)
 	b := NewExampleInteger(7)
 
-	cases := []struct{
-		a map[string]int
-		b map[string]int
+	type point struct {
+		x int
+		y int
+	}
+	cases := []struct {
+		a        point
+		b        point
 		expected bool
-	} {
+	}{
 		{
-			map[string]int{"x": -1, "y": -1},
-			map[string]int{"x": -1, "y": -1},
+			point{-1, -1},
+			point{-1, -1},
 			false,
 		},
 		{
-			map[string]int{"x": -1, "y": -1},
-			map[string]int{"x": 18, "y": 77},
+			point{-1, -1},
+			point{18, 77},
 			true,
 		},
 	}
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			x1 := NewExampleInteger(c.a["x"])
-			y1 := NewExampleInteger(c.a["y"])
+			x1 := NewExampleInteger(c.a.x)
+			y1 := NewExampleInteger(c.a.y)
 			actual1, err := ecc.NewPoint(x1, y1, a, b)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			x2 := NewExampleInteger(c.b["x"])
-			y2 := NewExampleInteger(c.b["y"])
+			x2 := NewExampleInteger(c.b.x)
+			y2 := NewExampleInteger(c.b.y)
 			actual2, err := ecc.NewPoint(x2, y2, a, b)
 			if err != nil {
 				t.Fatal(err)
@@ -128,46 +195,50 @@ func TestPoint_Add(t *testing.T) {
 	a := NewExampleInteger(5)
 	b := NewExampleInteger(7)
 
-	cases := []struct{
-		a map[string]interface{}
-		b map[string]interface{}
+	type point struct {
+		x interface{}
+		y interface{}
+	}
+	cases := []struct {
+		a        point
+		b        point
 		expected *ecc.Point
-	} {
+	}{
 		{
-			map[string]interface{}{"x": -1, "y": -1},
-			map[string]interface{}{"x": nil, "y": nil},
+			point{-1, -1},
+			point{nil, nil},
 			&ecc.Point{
 				X: NewExampleInteger(-1),
 				Y: NewExampleInteger(-1),
 				A: a, B: b, Err: nil},
 		},
 		{
-			map[string]interface{}{"x": nil, "y": nil},
-			map[string]interface{}{"x": -1, "y": -1},
+			point{nil, nil},
+			point{-1, -1},
 			&ecc.Point{
 				X: NewExampleInteger(-1),
 				Y: NewExampleInteger(-1),
 				A: a, B: b, Err: nil},
 		},
 		{
-			map[string]interface{}{"x": -1, "y": -1},
-			map[string]interface{}{"x": -1, "y": 1},
+			point{-1, -1},
+			point{-1, 1},
 			&ecc.Point{
 				X: nil,
 				Y: nil,
 				A: a, B: b, Err: nil},
 		},
 		{
-			map[string]interface{}{"x": 2, "y": 5},
-			map[string]interface{}{"x": -1, "y": -1},
+			point{2, 5},
+			point{-1, -1},
 			&ecc.Point{
 				X: NewExampleInteger(3),
 				Y: NewExampleInteger(-7),
 				A: a, B: b, Err: nil},
 		},
 		{
-			map[string]interface{}{"x": -1, "y": -1},
-			map[string]interface{}{"x": -1, "y": -1},
+			point{-1, -1},
+			point{-1, -1},
 			&ecc.Point{
 				X: NewExampleInteger(18),
 				Y: NewExampleInteger(77),
@@ -178,14 +249,16 @@ func TestPoint_Add(t *testing.T) {
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			var x1, y1 ecc.FieldInterface
-			if x, ok := c.a["x"].(int); ok {
+			if x, ok := c.a.x.(int); ok {
 				x1 = NewExampleInteger(x)
-			} else {
+			}
+			if c.a.x == nil {
 				x1 = nil
 			}
-			if y, ok := c.a["y"].(int); ok {
+			if y, ok := c.a.y.(int); ok {
 				y1 = NewExampleInteger(y)
-			} else {
+			}
+			if c.a.y == nil {
 				y1 = nil
 			}
 			p1, err := ecc.NewPoint(x1, y1, a, b)
@@ -194,14 +267,16 @@ func TestPoint_Add(t *testing.T) {
 			}
 
 			var x2, y2 ecc.FieldInterface
-			if x, ok := c.b["x"].(int); ok {
+			if x, ok := c.b.x.(int); ok {
 				x2 = NewExampleInteger(x)
-			} else {
+			}
+			if c.b.x == nil {
 				x2 = nil
 			}
-			if y, ok := c.b["y"].(int); ok {
+			if y, ok := c.b.y.(int); ok {
 				y2 = NewExampleInteger(y)
-			} else {
+			}
+			if c.b.y == nil {
 				y2 = nil
 			}
 			p2, err := ecc.NewPoint(x2, y2, a, b)

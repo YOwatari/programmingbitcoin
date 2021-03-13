@@ -38,11 +38,12 @@ func (elm *FieldElement) Calc() (FieldInterface, error) {
 }
 
 func (elm *FieldElement) Copy() FieldInterface {
-	panic("not implements")
+	return &FieldElement{Num: elm.Num, Prime: elm.Prime, Err: elm.Err}
 }
 
 func (elm *FieldElement) MulInt(c int) FieldInterface {
-	panic("not implements")
+	elm.Num = elm.Num * c % elm.Prime
+	return elm
 }
 
 func (elm *FieldElement) Add(other FieldInterface) FieldInterface {
