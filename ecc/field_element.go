@@ -81,7 +81,7 @@ func (elm *FieldElement) Pow(exp int) FieldInterface {
 	elm.Num = func(n int, exp int, mod int) int {
 		p := 1
 		for exp > 0 {
-			if exp&1 == 1 {
+			if exp & 1 == 1 {
 				p = (p * n) % mod
 			}
 

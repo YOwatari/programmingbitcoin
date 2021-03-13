@@ -38,11 +38,10 @@ func TestNewPoint(t *testing.T) {
 
 func TestNewPoint_FieldElement(t *testing.T) {
 	prime := 223
+	a, _ := ecc.NewFieldElement(0, prime)
+	b, _ := ecc.NewFieldElement(7, prime)
 
 	t.Run("Succeeds", func(t *testing.T) {
-		a, _ := ecc.NewFieldElement(0, prime)
-		b, _ := ecc.NewFieldElement(7, prime)
-
 		for _, v := range []struct {
 			x int
 			y int
@@ -68,9 +67,6 @@ func TestNewPoint_FieldElement(t *testing.T) {
 	})
 
 	t.Run("Fails", func(t *testing.T) {
-		a, _ := ecc.NewFieldElement(0, prime)
-		b, _ := ecc.NewFieldElement(7, prime)
-
 		for _, v := range []struct {
 			x int
 			y int
@@ -285,6 +281,99 @@ func TestPoint_Add(t *testing.T) {
 			}
 
 			actual, err := p1.Add(p2).Calc()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if actual.Ne(c.expected) {
+				diff := cmp.Diff(actual, c.expected)
+				t.Errorf("Point diff: (-got +want)\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestPoint_Add_FieldElement(t *testing.T) {
+	prime := 223
+	a, _ := ecc.NewFieldElement(0, prime)
+	b, _ := ecc.NewFieldElement(7, prime)
+
+	type point struct {
+		x int
+		y int
+	}
+	cases := []struct{
+		a point
+		b point
+		expected *ecc.Point
+	} {
+		{
+			point{192, 105},
+			point{17, 56},
+			&ecc.Point{
+				X: &ecc.FieldElement{Num: 170, Prime: prime, Err: nil},
+				Y: &ecc.FieldElement{Num: 142, Prime: prime, Err: nil},
+				A: a, B: b, Err: nil,
+			},
+		},
+		{
+			point{170, 142},
+			point{60, 139},
+			&ecc.Point{
+				X: &ecc.FieldElement{Num: 220, Prime: prime, Err: nil},
+				Y: &ecc.FieldElement{Num: 181, Prime: prime, Err: nil},
+				A: a, B: b, Err: nil,
+			},
+		},
+		{
+			point{47, 71},
+			point{17, 56},
+			&ecc.Point{
+				X: &ecc.FieldElement{Num: 215, Prime: prime, Err: nil},
+				Y: &ecc.FieldElement{Num: 68, Prime: prime, Err: nil},
+				A: a, B: b, Err: nil,
+			},
+		},
+		{
+			point{143, 98},
+			point{76, 66},
+			&ecc.Point{
+				X: &ecc.FieldElement{Num: 47, Prime: prime, Err: nil},
+				Y: &ecc.FieldElement{Num: 71, Prime: prime, Err: nil},
+				A: a, B: b, Err: nil,
+			},
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			x1, err := ecc.NewFieldElement(c.a.x, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y1, err := ecc.NewFieldElement(c.a.y, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			p1, err := ecc.NewPoint(x1, y1, a, b)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			x2, err := ecc.NewFieldElement(c.b.x, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			y2, err := ecc.NewFieldElement(c.b.y, prime)
+			if err != nil {
+				t.Fatal(err)
+			}
+			p2, err := ecc.NewPoint(x2, y2, a, b)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			actual, err := p1.Copy().Add(p2).Calc()
 			if err != nil {
 				t.Fatal(err)
 			}
