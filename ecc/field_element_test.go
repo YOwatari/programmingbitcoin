@@ -122,7 +122,7 @@ func TestFieldElement_Add(t *testing.T) {
 	})
 
 	cases := []struct {
-		a   *ecc.FieldElement
+		a   ecc.FieldInterface
 		expected *ecc.FieldElement
 	}{
 		{
@@ -158,7 +158,7 @@ func TestFieldElement_Sub(t *testing.T) {
 	})
 
 	cases := []struct {
-		a   *ecc.FieldElement
+		a   ecc.FieldInterface
 		expected *ecc.FieldElement
 	}{
 		{
@@ -198,7 +198,7 @@ func TestFieldElement_Mul(t *testing.T) {
 	})
 
 	cases := []struct {
-		a   *ecc.FieldElement
+		a   ecc.FieldInterface
 		expected *ecc.FieldElement
 	}{
 		{
@@ -224,7 +224,7 @@ func TestFieldElement_Mul(t *testing.T) {
 
 func TestFieldElement_Pow(t *testing.T) {
 	cases := []struct {
-		a   *ecc.FieldElement
+		a   ecc.FieldInterface
 		expected *ecc.FieldElement
 	}{
 		{
@@ -260,7 +260,7 @@ func TestFieldElement_Div(t *testing.T) {
 	})
 
 	cases := []struct {
-		a   *ecc.FieldElement
+		a   ecc.FieldInterface
 		expected *ecc.FieldElement
 	}{
 		{

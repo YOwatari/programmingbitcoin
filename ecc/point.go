@@ -2,40 +2,48 @@ package ecc
 
 import (
 	"fmt"
-	"math"
 )
 
 type Point struct {
-	A int
-	B int
-	X float64
-	Y float64
+	X   FieldInterface
+	Y   FieldInterface
+	A   FieldInterface
+	B   FieldInterface
 	Err error
 }
 
-func NewPoint(x float64, y float64, a int , b int) (*Point, error) {
-	p := &Point{a, b, math.Floor(x), math.Floor(y), nil}
-	if math.IsNaN(p.X) && math.IsNaN(p.Y) {
-		return p, nil
+func NewPoint(x FieldInterface, y FieldInterface, a FieldInterface, b FieldInterface) (*Point, error) {
+	if x == nil && y == nil {
+		return &Point{nil, nil, a, b, nil}, nil
 	}
-	if int(math.Pow(p.Y, 2)) != int(math.Pow(p.X, 3)) + p.A * int(p.X) + p.B {
-		return nil, fmt.Errorf("(%d, %d) is not on the curve", int(x), int(y))
+
+	y2, err := y.Copy().Pow(2).Calc()
+	if err != nil {
+		return nil, err
 	}
-	return p, nil
+	x3, err := x.Copy().Pow(3).Add(x.Copy().Mul(a)).Add(b).Calc()
+	if err != nil {
+		return nil, err
+	}
+
+	if y2.Ne(x3) {
+		return nil, fmt.Errorf("(%#v, %#v) is not on the curve", x, y)
+	}
+	return &Point{X: x, Y: y, A: a, B: b, Err: nil}, nil
 }
 
 func (p *Point) String() string {
-	if math.IsNaN(p.X) {
+	if p.X == nil {
 		return "Point(infinity)"
 	}
-	return fmt.Sprintf("Point(%d, %d)_%d_%d", int(p.X), int(p.Y), p.A, p.B)
+	return fmt.Sprintf("Point(%s, %s)_%s_%s", p.X, p.Y, p.A, p.B)
 }
 
 func (p *Point) Eq(other *Point) bool {
-	if math.IsNaN(p.X) {
-		return math.IsNaN(other.X)
+	if p.X == nil {
+		return other.X == nil
 	}
-	return p.X == other.X && p.Y == other.Y && p.A == other.A && p.B == other.B
+	return p.X.Eq(other.X) && p.Y.Eq(other.Y) && p.A.Eq(other.A) && p.B.Eq(other.B)
 }
 
 func (p *Point) Ne(other *Point) bool {
@@ -46,38 +54,46 @@ func (p *Point) Calc() (*Point, error) {
 	return p, p.Err
 }
 
+func (p *Point) Copy() *Point {
+	return &Point{p.X, p.Y, p.A, p.B, p.Err}
+}
+
 func (p *Point) Add(other *Point) *Point {
-	if p.A != other.A || p.B != other.B {
+	if p.A.Ne(other.A) || p.B.Ne(other.B) {
 		p.Err = fmt.Errorf("points %s, %s are not on the same curve", p, other)
 		return p
 	}
 
-	if math.IsNaN(p.X) {
+	if p.X == nil {
 		return other
 	}
-	if math.IsNaN(other.X) {
+	if other.X == nil {
 		return p
 	}
 
-	if p.X == other.X && p.Y != other.Y {
-		p.X = math.NaN()
-		p.Y = math.NaN()
+	if p.X.Eq(other.X) && p.Y.Ne(other.Y) {
+		p.X = nil
+		p.Y = nil
 		return p
 	}
 
 	if p.Ne(other) {
-		s := (other.Y - p.Y) / (other.X - p.X)
-		x := s * s - p.X - other.X
-		y := s * (p.X - x) - p.Y
-		return &Point{p.A, p.B, x, y, nil}
+		s := other.Y.Copy().Sub(p.Y).Div(other.X.Copy().Sub(p.X))
+		x := s.Copy().Pow(2).Sub(p.X).Sub(other.X)
+		y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
+		*p = Point{x, y, p.A, p.B,nil}
+		return p
 	}
 
-	if p.Eq(other) && p.Y == 0 {
-		return &Point{p.A, p.B, math.NaN(), math.NaN(), nil}
+	zero := p.Y.Copy().MulInt(0)
+	if p.Eq(other) && p.Y.Eq(zero) {
+		*p = Point{nil, nil, p.A, p.B, nil}
+		return p
 	}
 
-	s := (3 * p.X * p.X + float64(p.A)) / (2 * p.Y)
-	x := s * s - 2 * p.X
-	y := s * (p.X - x) - p.Y
-	return &Point{p.A, p.B, x, y, nil}
+	s := p.X.Copy().Pow(2).MulInt(3).Add(p.A).Div(p.Y.Copy().MulInt(2))
+	x := s.Copy().Pow(2).Sub(p.X.Copy().MulInt(2))
+	y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
+	*p = Point{x, y, p.A, p.B, nil}
+	return p
 }

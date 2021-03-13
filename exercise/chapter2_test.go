@@ -2,8 +2,7 @@ package exercise_test
 
 import (
 	"fmt"
-
-	"github.com/YOwatari/programmingbitcoin/ecc"
+	"math"
 )
 
 func ExampleChapter2_one()  {
@@ -17,8 +16,9 @@ func ExampleChapter2_one()  {
 		{5, 7},
 	}
 	for _, p := range points {
-		_, err := ecc.NewPoint(float64(p.x), float64(p.y), 5, 7)
-		fmt.Printf("(%d, %d): %t\n", p.x, p.y, err == nil)
+		left := int(math.Pow(float64(p.y), 2))
+		right := int(math.Pow(float64(p.x), 3)) + 5 * p.x + 7
+		fmt.Printf("(%d, %d): %t\n", p.x, p.y, left == right)
 	}
 
 	// Output:
@@ -29,21 +29,27 @@ func ExampleChapter2_one()  {
 }
 
 func ExampleChapter2_four() {
-	p1, _ := ecc.NewPoint(2, 5, 5, 7)
-	p2, _ := ecc.NewPoint(-1, -1, 5, 7)
-	p, _ := p1.Add(p2).Calc()
-	fmt.Printf("%v + %v = %v", p1, p2, p)
+	x1, y1 := 2, 5
+	x2, y2 := -1, -1
 
+	s := (y2 - y1) / (x2 -x1)
+	x3 := int(math.Pow(float64(s), 2)) - x1 -x2
+	y3 := s * (x1 - x3) - y1
+
+	fmt.Printf("Point(%d, %d)_5_7 + Point(%d, %d)_5_7 = Point(%d, %d)_5_7", x1, y1, x2, y2, x3, y3)
 	// Output:
 	// Point(2, 5)_5_7 + Point(-1, -1)_5_7 = Point(3, -7)_5_7
 }
 
 func ExampleChapter2_six()  {
-	p1, _ := ecc.NewPoint(-1, -1, 5, 7)
-	p2, _ := ecc.NewPoint(-1, -1, 5, 7)
-	p, _ := p1.Add(p2).Calc()
-	fmt.Printf("%v + %v = %v", p1, p2, p)
+	x1, y1 := -1, -1
+	x2, y2 := -1, -1
 
+	s := (3 * int(math.Pow(float64(x1), 2)) + 5) / 2 * y1
+	x3 := int(math.Pow(float64(s), 2)) - 2 * x1
+	y3 := s * (x1 - x3) - y1
+
+	fmt.Printf("Point(%d, %d)_5_7 + Point(%d, %d)_5_7 = Point(%d, %d)_5_7", x1, y1, x2, y2, x3, y3)
 	// Output:
 	// Point(-1, -1)_5_7 + Point(-1, -1)_5_7 = Point(18, 77)_5_7
 }
