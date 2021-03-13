@@ -8,15 +8,12 @@ import (
 
 func ExampleChapter1_two() {
 	prime := 57
-	sub := func(n int, mod int) int {
-		return ((n % prime) + prime) % prime
-	}
 
 	fmt.Printf("Prime: %d\n", prime)
 	fmt.Printf("44 + 33 = %d\n", (44 + 33) % prime)
-	fmt.Printf("9 - 29 = %d\n", sub(9 - 29, prime))
+	fmt.Printf("9 - 29 = %d\n", _sub(9, 29, prime))
 	fmt.Printf("17 + 42 + 49 = %d\n", ((17 + 42) % prime + 49) % prime)
-	fmt.Printf("52 - 30 - 38 = %d\n", sub(sub(52 - 30, prime) - 38, prime))
+	fmt.Printf("52 - 30 - 38 = %d\n", _sub(_sub(52, 30, prime), 38, prime))
 
 	// Output:
 	// Prime: 57
@@ -77,6 +74,12 @@ func ExampleChapter1_seven() {
 	// p=11 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 	// p=17 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 	// p=31 [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+}
+
+
+func _sub(a int, b int, mod int) int {
+	n := a - b
+	return ((n % mod) + mod) % mod
 }
 
 func _pow(n int, exp int, mod int) int {

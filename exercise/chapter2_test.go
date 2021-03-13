@@ -16,9 +16,9 @@ func ExampleChapter2_one()  {
 		{5, 7},
 	}
 	for _, p := range points {
-		left := int(math.Pow(float64(p.y), 2))
-		right := int(math.Pow(float64(p.x), 3)) + 5 * p.x + 7
-		fmt.Printf("(%d, %d): %t\n", p.x, p.y, left == right)
+		y := int(math.Pow(float64(p.y), 2))
+		x := int(math.Pow(float64(p.x), 3)) + 5 * p.x + 7
+		fmt.Printf("(%d, %d): %t\n", p.x, p.y, y == x)
 	}
 
 	// Output:
