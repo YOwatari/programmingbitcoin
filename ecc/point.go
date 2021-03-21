@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"fmt"
+	"math/big"
 )
 
 type Point struct {
@@ -12,22 +13,31 @@ type Point struct {
 	Err error
 }
 
-func NewPoint(x FieldInterface, y FieldInterface, a FieldInterface, b FieldInterface) (*Point, error) {
-	if x == nil && y == nil {
+func NewPoint(rawX interface{}, rawY interface{}, a FieldInterface, b FieldInterface) (*Point, error) {
+	if rawX == nil || rawY == nil {
 		return &Point{nil, nil, a, b, nil}, nil
 	}
+	x, ok := rawX.(FieldInterface)
+	if !ok {
+		return nil, fmt.Errorf("rawX interface conversion")
+	}
+	y, ok := rawY.(FieldInterface)
+	if !ok {
+		return nil, fmt.Errorf("rawY interface conversion")
+	}
 
-	y2, err := y.Copy().Pow(2).Calc()
+	verifyY, err := y.Copy().Pow(2).Calc()
 	if err != nil {
 		return nil, err
 	}
-	x3, err := x.Copy().Pow(3).Add(x.Copy().Mul(a)).Add(b).Calc()
+
+	verifyX, err := x.Copy().Pow(3).Add(x.Copy().Mul(a)).Add(b).Calc()
 	if err != nil {
 		return nil, err
 	}
 
-	if y2.Ne(x3) {
-		return nil, fmt.Errorf("(%#v, %#v) is not on the curve", x, y)
+	if verifyY.Ne(verifyX) {
+		return nil, fmt.Errorf("(%#v, %#v) is not on the curve", rawX, rawY)
 	}
 	return &Point{X: x, Y: y, A: a, B: b, Err: nil}, nil
 }
@@ -42,6 +52,9 @@ func (p *Point) String() string {
 func (p *Point) Eq(other *Point) bool {
 	if p.X == nil {
 		return other.X == nil
+	}
+	if other.X == nil {
+		return p.X == nil
 	}
 	return p.X.Eq(other.X) && p.Y.Eq(other.Y) && p.A.Eq(other.A) && p.B.Eq(other.B)
 }
@@ -81,19 +94,35 @@ func (p *Point) Add(other *Point) *Point {
 		s := other.Y.Copy().Sub(p.Y).Div(other.X.Copy().Sub(p.X))
 		x := s.Copy().Pow(2).Sub(p.X).Sub(other.X)
 		y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
-		*p = Point{x, y, p.A, p.B,nil}
+		*p = Point{x, y, p.A, p.B,p.Err}
 		return p
 	}
 
-	zero := p.Y.Copy().MulInt(0)
+	zero := p.Y.Copy().RMul(0)
 	if p.Eq(other) && p.Y.Eq(zero) {
-		*p = Point{nil, nil, p.A, p.B, nil}
+		*p = Point{nil, nil, p.A, p.B, p.Err}
 		return p
 	}
 
-	s := p.X.Copy().Pow(2).MulInt(3).Add(p.A).Div(p.Y.Copy().MulInt(2))
-	x := s.Copy().Pow(2).Sub(p.X.Copy().MulInt(2))
+	s := p.X.Copy().Pow(2).RMul(3).Add(p.A).Div(p.Y.Copy().RMul(2))
+	x := s.Copy().Pow(2).Sub(p.X.Copy().RMul(2))
 	y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
-	*p = Point{x, y, p.A, p.B, nil}
+	*p = Point{x, y, p.A, p.B, p.Err}
 	return p
+}
+
+func (p *Point) RMul(n *big.Int) *Point {
+	coefficient := n
+	current := p
+	result := &Point{nil, nil, p.A, p.B, p.Err}
+
+	for coefficient.Sign() > 0 {
+		if coefficient.Bit(1) > 0 {
+			result.Add(current)
+		}
+		current.Add(current)
+		coefficient = new(big.Int).Rsh(coefficient, 1)
+	}
+
+	return result
 }

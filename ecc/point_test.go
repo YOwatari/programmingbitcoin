@@ -3,6 +3,7 @@ package ecc_test
 import (
 	"fmt"
 	"math"
+	"math/big"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -386,6 +387,48 @@ func TestPoint_Add_FieldElement(t *testing.T) {
 	}
 }
 
+func TestPoint_RMul(t *testing.T) {
+	prime := 223
+	a, _ := ecc.NewFieldElement(0, prime)
+	b, _ := ecc.NewFieldElement(7, prime)
+	x, _ := ecc.NewFieldElement(15, prime)
+	y, _ := ecc.NewFieldElement(86, prime)
+	expected := &ecc.Point{A: a, B: b}
+
+	p, err := ecc.NewPoint(x, y, a, b)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	actual, err := p.RMul(big.NewInt(7)).Calc()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if actual.Ne(expected) {
+		diff := cmp.Diff(actual, expected)
+		t.Errorf("Point diff: (-got +want)\n%s", diff)
+	}
+}
+
+func BenchmarkPoint_RMul(b *testing.B) {
+	prime := 223
+	A, _ := ecc.NewFieldElement(0, prime)
+	B, _ := ecc.NewFieldElement(7, prime)
+	x, _ := ecc.NewFieldElement(15, prime)
+	y, _ := ecc.NewFieldElement(86, prime)
+	p, err := ecc.NewPoint(x, y, A, B)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	n := new(big.Int).Lsh(big.NewInt(1), 40)
+	b.ResetTimer()
+	if _, err := p.RMul(n).Calc(); err != nil {
+		b.Fatal(err)
+	}
+}
+
 type ExampleInteger struct {
 	N int
 }
@@ -411,7 +454,7 @@ func (i *ExampleInteger) Copy() ecc.FieldInterface {
 	return &ExampleInteger{N: i.N}
 }
 
-func (i *ExampleInteger) MulInt(c int) ecc.FieldInterface {
+func (i *ExampleInteger) RMul(c int) ecc.FieldInterface {
 	*i = ExampleInteger{N: i.N * c}
 	return i
 }

@@ -41,11 +41,6 @@ func (elm *FieldElement) Copy() FieldInterface {
 	return &FieldElement{Num: elm.Num, Prime: elm.Prime, Err: elm.Err}
 }
 
-func (elm *FieldElement) MulInt(c int) FieldInterface {
-	elm.Num = elm.Num * c % elm.Prime
-	return elm
-}
-
 func (elm *FieldElement) Add(other FieldInterface) FieldInterface {
 	elm2 := other.(*FieldElement)
 	if elm.Prime != elm2.Prime {
@@ -103,4 +98,9 @@ func (elm *FieldElement) Div(other FieldInterface) FieldInterface {
 		return elm
 	}
 	return elm.Mul(elm2.Pow(elm2.Prime - 2))
+}
+
+func (elm *FieldElement) RMul(c int) FieldInterface {
+	elm.Num = elm.Num * c % elm.Prime
+	return elm
 }
