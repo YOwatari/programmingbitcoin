@@ -2,29 +2,23 @@ package ecc_test
 
 import (
 	"fmt"
+	"math/big"
 	"testing"
-
-	"github.com/google/go-cmp/cmp"
 
 	"github.com/YOwatari/programmingbitcoin/ecc"
 )
 
 func TestNewFieldElement(t *testing.T) {
 	t.Run("Succeeds", func(t *testing.T) {
-		actual, err := ecc.NewFieldElement(0, 11)
+		_, err := ecc.NewFieldElementFromInt64(0, 11)
 		if err != nil {
 			t.Error(err)
-		}
-		expected, _ := ecc.NewFieldElement(0, 11)
-
-		if diff := cmp.Diff(actual, expected); diff != "" {
-			t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
 		}
 	})
 
 	cases := []struct {
-		num   int
-		prime int
+		num   int64
+		prime int64
 	}{
 		{
 			10,
@@ -38,12 +32,17 @@ func TestNewFieldElement(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("Fails_%d", i), func(t *testing.T) {
-			got, err := ecc.NewFieldElement(c.num, c.prime)
+			got, err := ecc.NewFieldElementFromInt64(c.num, c.prime)
 			if err == nil || got != nil {
 				t.Error("should fail")
 			}
 		})
 	}
+}
+
+func _newFieldElement(num int64, prime int64) *ecc.FieldElement {
+	elm, _ := ecc.NewFieldElementFromInt64(num, prime)
+	return elm
 }
 
 func TestFieldElement_Eq(t *testing.T) {
@@ -53,18 +52,18 @@ func TestFieldElement_Eq(t *testing.T) {
 		expected bool
 	}{
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 7, Prime: 13},
+			_newFieldElement(7, 13),
+			_newFieldElement(7, 13),
 			true,
 		},
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 6, Prime: 13},
+			_newFieldElement(7, 13),
+			_newFieldElement(6, 13),
 			false,
 		},
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 7, Prime: 11},
+			_newFieldElement(7, 13),
+			_newFieldElement(7, 11),
 			false,
 		},
 	}
@@ -85,18 +84,18 @@ func TestFieldElement_Ne(t *testing.T) {
 		expected bool
 	}{
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 7, Prime: 13},
+			_newFieldElement(7, 13),
+			_newFieldElement(7, 13),
 			false,
 		},
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 6, Prime: 13},
+			_newFieldElement(7, 13),
+			_newFieldElement(6, 13),
 			true,
 		},
 		{
-			&ecc.FieldElement{Num: 7, Prime: 13},
-			&ecc.FieldElement{Num: 7, Prime: 11},
+			_newFieldElement(7, 13),
+			_newFieldElement(7, 11),
 			true,
 		},
 	}
@@ -112,11 +111,11 @@ func TestFieldElement_Ne(t *testing.T) {
 
 func TestFieldElement_Add(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		a, err := ecc.NewFieldElement(0, 1)
+		a, err := ecc.NewFieldElementFromInt64(0, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := a.Add(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
+		if _, err := a.Add(_newFieldElement(0, 3)).Calc(); err == nil {
 			t.Error("should fail to add two numbers in different Fields")
 		}
 	})
@@ -126,8 +125,8 @@ func TestFieldElement_Add(t *testing.T) {
 		expected *ecc.FieldElement
 	}{
 		{
-			(&ecc.FieldElement{Num: 7, Prime: 13}).Add(&ecc.FieldElement{Num: 12, Prime: 13}),
-			&ecc.FieldElement{Num: 6, Prime: 13},
+			_newFieldElement(7, 13).Add(_newFieldElement(12, 13)),
+			_newFieldElement(6, 13),
 		},
 	}
 
@@ -138,9 +137,8 @@ func TestFieldElement_Add(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actual.Eq(c.expected) != true {
-				diff := cmp.Diff(actual, c.expected)
-				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			if actual.Ne(c.expected) {
+				t.Errorf("\n got: %s\n want: %s\n", actual, c.expected)
 			}
 		})
 	}
@@ -148,11 +146,11 @@ func TestFieldElement_Add(t *testing.T) {
 
 func TestFieldElement_Sub(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		a, err := ecc.NewFieldElement(0, 1)
+		a, err := ecc.NewFieldElementFromInt64(0, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := a.Sub(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
+		if _, err := a.Sub(_newFieldElement(0, 3)).Calc(); err == nil {
 			t.Error("should fail to sub two numbers in different Fields")
 		}
 	})
@@ -162,12 +160,12 @@ func TestFieldElement_Sub(t *testing.T) {
 		expected *ecc.FieldElement
 	}{
 		{
-			(&ecc.FieldElement{Num: 7, Prime: 13}).Sub(&ecc.FieldElement{Num: 6, Prime: 13}),
-			&ecc.FieldElement{Num: 1, Prime: 13},
+			_newFieldElement(7, 13).Sub(_newFieldElement(6, 13)),
+			_newFieldElement(1, 13),
 		},
 		{
-			(&ecc.FieldElement{Num: 7, Prime: 13}).Sub(&ecc.FieldElement{Num: 8, Prime: 13}),
-			&ecc.FieldElement{Num: 12, Prime: 13},
+			_newFieldElement(7, 13).Sub(_newFieldElement(8, 13)),
+			_newFieldElement(12, 13),
 		},
 	}
 
@@ -178,9 +176,8 @@ func TestFieldElement_Sub(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actual.Eq(c.expected) != true {
-				diff := cmp.Diff(actual, c.expected)
-				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			if actual.Ne(c.expected) {
+				t.Errorf("\n got: %s\n want: %s\n", actual, c.expected)
 			}
 		})
 	}
@@ -188,11 +185,11 @@ func TestFieldElement_Sub(t *testing.T) {
 
 func TestFieldElement_Mul(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		actual, err := ecc.NewFieldElement(0, 1)
+		actual, err := ecc.NewFieldElementFromInt64(0, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := actual.Mul(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
+		if _, err := actual.Mul(_newFieldElement(0, 3)).Calc(); err == nil {
 			t.Error("should fail to multiply two numbers in different Fields")
 		}
 	})
@@ -202,8 +199,8 @@ func TestFieldElement_Mul(t *testing.T) {
 		expected *ecc.FieldElement
 	}{
 		{
-			(&ecc.FieldElement{Num: 3, Prime: 13}).Mul(&ecc.FieldElement{Num: 12, Prime: 13}),
-			&ecc.FieldElement{Num: 10, Prime: 13},
+			_newFieldElement(3, 13).Mul(_newFieldElement(12, 13)),
+			_newFieldElement(10, 13),
 		},
 	}
 
@@ -214,9 +211,8 @@ func TestFieldElement_Mul(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actual.Eq(c.expected) != true {
-				diff := cmp.Diff(actual, c.expected)
-				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			if actual.Ne(c.expected) {
+				t.Errorf("\n got: %s\n want: %s\n", actual, c.expected)
 			}
 		})
 	}
@@ -228,8 +224,8 @@ func TestFieldElement_Pow(t *testing.T) {
 		expected *ecc.FieldElement
 	}{
 		{
-			(&ecc.FieldElement{Num: 3, Prime: 13}).Pow(3),
-			&ecc.FieldElement{Num: 1, Prime: 13},
+			_newFieldElement(3, 13).Pow(big.NewInt(3)),
+			_newFieldElement(1, 13),
 		},
 	}
 
@@ -240,9 +236,8 @@ func TestFieldElement_Pow(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actual.Eq(c.expected) != true {
-				diff := cmp.Diff(actual, c.expected)
-				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			if actual.Ne(c.expected) {
+				t.Errorf("\n got: %s\n want: %s\n", actual, c.expected)
 			}
 		})
 	}
@@ -250,11 +245,11 @@ func TestFieldElement_Pow(t *testing.T) {
 
 func TestFieldElement_Div(t *testing.T) {
 	t.Run("Fails", func(t *testing.T) {
-		a, err := ecc.NewFieldElement(0, 1)
+		a, err := ecc.NewFieldElementFromInt64(0, 1)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := a.Div(&ecc.FieldElement{Num: 0, Prime: 3}).Calc(); err == nil {
+		if _, err := a.Div(_newFieldElement(0, 3)).Calc(); err == nil {
 			t.Error("should fail to division two numbers in different Fields")
 		}
 	})
@@ -264,8 +259,8 @@ func TestFieldElement_Div(t *testing.T) {
 		expected *ecc.FieldElement
 	}{
 		{
-			(&ecc.FieldElement{Num: 2, Prime: 19}).Div(&ecc.FieldElement{Num: 7, Prime: 19}),
-			&ecc.FieldElement{Num: 3, Prime: 19},
+			_newFieldElement(2, 19).Div(_newFieldElement(7, 19)),
+			_newFieldElement(3, 19),
 		},
 	}
 
@@ -276,9 +271,8 @@ func TestFieldElement_Div(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			if actual.Eq(c.expected) != true {
-				diff := cmp.Diff(actual, c.expected)
-				t.Errorf("FieldElement diff: (-got +want)\n%s", diff)
+			if actual.Ne(c.expected) {
+				t.Errorf("\n got: %s\n want: %s\n", actual, c.expected)
 			}
 		})
 	}

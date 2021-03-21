@@ -1,5 +1,7 @@
 package ecc
 
+import "math/big"
+
 type FieldInterface interface {
 	Eq(other FieldInterface) bool
 	Ne(other FieldInterface) bool
@@ -7,10 +9,13 @@ type FieldInterface interface {
 	Calc() (FieldInterface, error)
 	Copy() FieldInterface
 
+	IsInf() bool
+	Inf()
+
 	Add(other FieldInterface) FieldInterface
 	Sub(other FieldInterface) FieldInterface
 	Mul(other FieldInterface) FieldInterface
-	Pow(exp int) FieldInterface
 	Div(other FieldInterface) FieldInterface
-	RMul(c int) FieldInterface
+	Pow(exp *big.Int) FieldInterface
+	RMul(coef *big.Int) FieldInterface
 }

@@ -6,13 +6,13 @@ import (
 )
 
 func ExampleChapter3_one()  {
-	prime := 223
-	a, _ := ecc.NewFieldElement(0, prime)
-	b, _ := ecc.NewFieldElement(7, prime)
+	prime := int64(223)
+	a, _ := ecc.NewFieldElementFromInt64(0, prime)
+	b, _ := ecc.NewFieldElementFromInt64(7, prime)
 
 	points := []struct{
-		x int
-		y int
+		x int64
+		y int64
 	} {
 		{192, 105},
 		{17, 56},
@@ -22,8 +22,8 @@ func ExampleChapter3_one()  {
 	}
 
 	for _, p := range points {
-		y, _ := ecc.NewFieldElement(p.y, prime)
-		x, _ := ecc.NewFieldElement(p.x, prime)
+		y, _ := ecc.NewFieldElementFromInt64(p.y, prime)
+		x, _ := ecc.NewFieldElementFromInt64(p.x, prime)
 		_, err := ecc.NewPoint(x, y, a, b)
 		fmt.Printf("(%d, %d): %t\n", p.x, p.y, err == nil)
 	}
@@ -37,13 +37,13 @@ func ExampleChapter3_one()  {
 }
 
 func ExampleChapter3_two() {
-	prime := 223
-	a, _ := ecc.NewFieldElement(0, prime)
-	b, _ := ecc.NewFieldElement(7, prime)
+	prime := int64(223)
+	a, _ := ecc.NewFieldElementFromInt64(0, prime)
+	b, _ := ecc.NewFieldElementFromInt64(7, prime)
 
 	type point struct {
-		x int
-		y int
+		x int64
+		y int64
 	}
 	cases := []struct{
 		a point
@@ -64,10 +64,10 @@ func ExampleChapter3_two() {
 	}
 
 	for _, c := range cases {
-		y1, _ := ecc.NewFieldElement(c.a.y, prime)
-		x1, _ := ecc.NewFieldElement(c.a.x, prime)
-		y2, _ := ecc.NewFieldElement(c.b.y, prime)
-		x2, _ := ecc.NewFieldElement(c.b.x, prime)
+		y1, _ := ecc.NewFieldElementFromInt64(c.a.y, prime)
+		x1, _ := ecc.NewFieldElementFromInt64(c.a.x, prime)
+		y2, _ := ecc.NewFieldElementFromInt64(c.b.y, prime)
+		x2, _ := ecc.NewFieldElementFromInt64(c.b.x, prime)
 		p1, err := ecc.NewPoint(x1, y1, a, b)
 		if err != nil {
 			panic(err)
@@ -92,14 +92,14 @@ func ExampleChapter3_two() {
 }
 
 func ExampleChapter3_four() {
-	prime := 223
-	a, _ := ecc.NewFieldElement(0, prime)
-	b, _ := ecc.NewFieldElement(7, prime)
+	prime := int64(223)
+	a, _ := ecc.NewFieldElementFromInt64(0, prime)
+	b, _ := ecc.NewFieldElementFromInt64(7, prime)
 
 	cases := []struct{
 		n int
-		x int
-		y int
+		x int64
+		y int64
 	} {
 		{
 			2, 192, 105,
@@ -122,12 +122,12 @@ func ExampleChapter3_four() {
 	}
 
 	for _, c := range cases {
-		ansY, _ := ecc.NewFieldElement(c.y, prime)
-		ansX, _ := ecc.NewFieldElement(c.x, prime)
+		ansY, _ := ecc.NewFieldElementFromInt64(c.y, prime)
+		ansX, _ := ecc.NewFieldElementFromInt64(c.x, prime)
 		ansP, _ := ecc.NewPoint(ansX, ansY, a, b)
 		for i := 0; i < c.n - 1; i++ {
-			y, _ := ecc.NewFieldElement(c.y, prime)
-			x, _ := ecc.NewFieldElement(c.x, prime)
+			y, _ := ecc.NewFieldElementFromInt64(c.y, prime)
+			x, _ := ecc.NewFieldElementFromInt64(c.x, prime)
 			p, _ := ecc.NewPoint(x, y, a, b)
 			ansP = ansP.Copy().Add(p)
 		}
@@ -136,7 +136,7 @@ func ExampleChapter3_four() {
 			panic(err)
 		}
 
-		if p.X == nil || p.Y == nil {
+		if p.X.IsInf() || p.Y.IsInf() {
 			fmt.Printf("%d * (%d, %d) = %s\n", c.n, c.x, c.y, p)
 		} else {
 			fmt.Printf("%d * (%d, %d) = Point(%d, %d)\n", c.n, c.x, c.y, p.X.(*ecc.FieldElement).Num, p.Y.(*ecc.FieldElement).Num)
@@ -153,15 +153,15 @@ func ExampleChapter3_four() {
 }
 
 func ExampleChapter3_five()  {
-	prime := 223
-	a, _ := ecc.NewFieldElement(0, prime)
-	b, _ := ecc.NewFieldElement(7, prime)
-	x, _ := ecc.NewFieldElement(15, prime)
-	y, _ := ecc.NewFieldElement(86, prime)
+	prime := int64(223)
+	a, _ := ecc.NewFieldElementFromInt64(0, prime)
+	b, _ := ecc.NewFieldElementFromInt64(7, prime)
+	x, _ := ecc.NewFieldElementFromInt64(15, prime)
+	y, _ := ecc.NewFieldElementFromInt64(86, prime)
 	p, _ := ecc.NewPoint(x, y, a, b)
 
 	ansP := p.Copy()
-	inf, _ := ecc.NewPoint(nil, nil, a,  b)
+	inf := p.Copy().Inf()
 
 	n := 1
 	for ansP.Ne(inf) {

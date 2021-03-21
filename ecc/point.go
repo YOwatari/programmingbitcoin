@@ -13,48 +13,37 @@ type Point struct {
 	Err error
 }
 
-func NewPoint(rawX interface{}, rawY interface{}, a FieldInterface, b FieldInterface) (*Point, error) {
-	if rawX == nil || rawY == nil {
-		return &Point{nil, nil, a, b, nil}, nil
-	}
-	x, ok := rawX.(FieldInterface)
-	if !ok {
-		return nil, fmt.Errorf("rawX interface conversion")
-	}
-	y, ok := rawY.(FieldInterface)
-	if !ok {
-		return nil, fmt.Errorf("rawY interface conversion")
+func NewPoint(x FieldInterface, y FieldInterface, a FieldInterface, b FieldInterface) (*Point, error) {
+	if x.IsInf() || y.IsInf() {
+		return &Point{x, y, a, b, nil}, nil
 	}
 
-	verifyY, err := y.Copy().Pow(2).Calc()
+	verifyY, err := y.Copy().Pow(big.NewInt(2)).Calc()
 	if err != nil {
 		return nil, err
 	}
 
-	verifyX, err := x.Copy().Pow(3).Add(x.Copy().Mul(a)).Add(b).Calc()
+	verifyX, err := x.Copy().Pow(big.NewInt(3)).Add(x.Copy().Mul(a)).Add(b).Calc()
 	if err != nil {
 		return nil, err
 	}
 
 	if verifyY.Ne(verifyX) {
-		return nil, fmt.Errorf("(%#v, %#v) is not on the curve", rawX, rawY)
+		return nil, fmt.Errorf("(%#v, %#v) is not on the curve", x, y)
 	}
 	return &Point{X: x, Y: y, A: a, B: b, Err: nil}, nil
 }
 
 func (p *Point) String() string {
-	if p.X == nil {
+	if p.X.IsInf() {
 		return "Point(infinity)"
 	}
 	return fmt.Sprintf("Point(%s, %s)_%s_%s", p.X, p.Y, p.A, p.B)
 }
 
 func (p *Point) Eq(other *Point) bool {
-	if p.X == nil {
-		return other.X == nil
-	}
-	if other.X == nil {
-		return p.X == nil
+	if p.X.IsInf() || other.X.IsInf() {
+		return p.X.IsInf() && other.X.IsInf()
 	}
 	return p.X.Eq(other.X) && p.Y.Eq(other.Y) && p.A.Eq(other.A) && p.B.Eq(other.B)
 }
@@ -68,7 +57,7 @@ func (p *Point) Calc() (*Point, error) {
 }
 
 func (p *Point) Copy() *Point {
-	return &Point{p.X, p.Y, p.A, p.B, p.Err}
+	return &Point{p.X.Copy(), p.Y.Copy(), p.A.Copy(), p.B.Copy(), p.Err}
 }
 
 func (p *Point) Add(other *Point) *Point {
@@ -77,35 +66,33 @@ func (p *Point) Add(other *Point) *Point {
 		return p
 	}
 
-	if p.X == nil {
+	if p.X.IsInf() {
 		return other
 	}
-	if other.X == nil {
+
+	if other.X.IsInf() {
 		return p
 	}
 
 	if p.X.Eq(other.X) && p.Y.Ne(other.Y) {
-		p.X = nil
-		p.Y = nil
-		return p
+		return p.Inf()
 	}
 
 	if p.Ne(other) {
 		s := other.Y.Copy().Sub(p.Y).Div(other.X.Copy().Sub(p.X))
-		x := s.Copy().Pow(2).Sub(p.X).Sub(other.X)
+		x := s.Copy().Pow(big.NewInt(2)).Sub(p.X).Sub(other.X)
 		y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
 		*p = Point{x, y, p.A, p.B,p.Err}
 		return p
 	}
 
-	zero := p.Y.Copy().RMul(0)
+	zero := p.Y.Copy().RMul(big.NewInt(0))
 	if p.Eq(other) && p.Y.Eq(zero) {
-		*p = Point{nil, nil, p.A, p.B, p.Err}
-		return p
+		return p.Inf()
 	}
 
-	s := p.X.Copy().Pow(2).RMul(3).Add(p.A).Div(p.Y.Copy().RMul(2))
-	x := s.Copy().Pow(2).Sub(p.X.Copy().RMul(2))
+	s := p.X.Copy().Pow(big.NewInt(2)).RMul(big.NewInt(3)).Add(p.A).Div(p.Y.Copy().RMul(big.NewInt(2)))
+	x := s.Copy().Pow(big.NewInt(2)).Sub(p.X.Copy().RMul(big.NewInt(2)))
 	y := s.Copy().Mul(p.X.Copy().Sub(x)).Sub(p.Y)
 	*p = Point{x, y, p.A, p.B, p.Err}
 	return p
@@ -114,7 +101,7 @@ func (p *Point) Add(other *Point) *Point {
 func (p *Point) RMul(n *big.Int) *Point {
 	coefficient := n
 	current := p
-	result := &Point{nil, nil, p.A, p.B, p.Err}
+	result := p.Inf()
 
 	for coefficient.Sign() > 0 {
 		if coefficient.Bit(1) > 0 {
@@ -125,4 +112,10 @@ func (p *Point) RMul(n *big.Int) *Point {
 	}
 
 	return result
+}
+
+func (p *Point) Inf() *Point {
+	p.X.Inf()
+	p.Y.Inf()
+	return p
 }
