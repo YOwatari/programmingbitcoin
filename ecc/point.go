@@ -53,10 +53,6 @@ func (p *Point) Ne(other *Point) bool {
 }
 
 func (p *Point) Calc() (*Point, error) {
-	/*_, err := NewPoint(p.X, p.Y, p.A, p.B)
-	if err != nil {
-		return p, err
-	}*/
 	return p, p.Err
 }
 

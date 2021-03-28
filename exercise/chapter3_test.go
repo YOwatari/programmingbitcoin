@@ -1,9 +1,12 @@
 package exercise_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"github.com/YOwatari/programmingbitcoin/ecc"
 	"math/big"
+
+	"github.com/YOwatari/programmingbitcoin/ecc"
 )
 
 func ExampleChapter3_one()  {
@@ -218,13 +221,37 @@ func ExampleChapter3_six() {
 		u = u.Mul(z, invS).Mod(u, ecc.N)
 		v := new(big.Int)
 		v = v.Mul(r, invS).Mod(v, ecc.N)
-		ug := new(ecc.S256Point).RMul(ecc.G, u)
-		vp := new(ecc.S256Point).RMul(p, v)
-		num := new(ecc.Point).Add(ug.Point, vp.Point).X.(*ecc.FieldElement).Num
-		fmt.Println(num.Cmp(r) == 0)
+		n := new(ecc.S256Point)
+		n.Add(new(ecc.S256Point).RMul(ecc.G, u), new(ecc.S256Point).RMul(p, v))
+		fmt.Println(n.X.(*ecc.FieldElement).Num.Cmp(r) == 0)
 	}
 
 	// Output:
 	// true
 	// true
+}
+
+func ExampleChapter3_seven() {
+	getHash := func(s string) *big.Int {
+		r1 := sha256.Sum256([]byte(s))
+		r2 := sha256.Sum256(r1[:])
+		result, _ := new(big.Int).SetString(hex.EncodeToString(r2[:]), 16)
+		return result
+	}
+
+	e := big.NewInt(12345)
+	z := getHash("Programming Bitcoin!")
+
+	k := big.NewInt(1234567890)
+	r := new(ecc.S256Point).RMul(ecc.G, k).X.(*ecc.FieldElement).Num
+	s := new(big.Int)
+	s.Add(z, new(big.Int).Mul(r, e)).Div(s, k).Mod(s, ecc.N)
+	point := new(ecc.S256Point).RMul(ecc.G, e)
+	sig := ecc.NewSignature(r, s)
+	fmt.Printf("signature: %s\n", sig)
+	fmt.Printf("point: %x, %x\n", point.X.(*ecc.FieldElement).Num, point.Y.(*ecc.FieldElement).Num)
+
+	// Output:
+	// signature: Signature(2b698a0f0a4041b77e63488ad48c23e8e8838dd1fb7520408b121697b782ef22, 1c7503f6b9f17fc36be650986921fb7be5f028684a325e5133f6a7b26b99)
+	// point: f01d6b9018ab421dd410404cb869072065522bf85734008f105cf385a023a80f, eba29d0f0c5408ed681984dc525982abefccd9f7ff01dd26da4999cf3f6a295
 }

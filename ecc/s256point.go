@@ -1,6 +1,8 @@
 package ecc
 
-import "math/big"
+import (
+	"math/big"
+)
 
 var (
 	G *S256Point
@@ -39,9 +41,27 @@ func NewS256PointFromBigInt(x *big.Int, y *big.Int) (*S256Point, error) {
 	return &S256Point{p}, nil
 }
 
+func (p *S256Point) Add(p1, p2 *S256Point) *S256Point {
+	result := new(Point).Add(p1.Point, p2.Point)
+	*p = S256Point{result}
+	return p
+}
+
 func (p *S256Point) RMul(r *S256Point, coef *big.Int) *S256Point {
 	c := new(big.Int).Mod(coef, N)
 	result := new(Point)
 	result.RMul(r.Point, c)
-	return &S256Point{result}
+	*p = S256Point{result}
+	return p
+}
+
+func (p *S256Point) Verify(z *big.Int, sig *Signature) bool {
+	invS := new(big.Int).Exp(sig.S, new(big.Int).Sub(N, big.NewInt(2)), N)
+	u := new(big.Int)
+	u.Mul(z, invS).Mod(u, N)
+	v := new(big.Int)
+	v.Mul(sig.R, invS).Mod(v, N)
+	n := new(S256Point)
+	n.Add(new(S256Point).RMul(G, u), new(S256Point).RMul(p, v))
+	return n.X.(*FieldElement).Num.Cmp(sig.R) == 0
 }
