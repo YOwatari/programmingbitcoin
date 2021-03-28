@@ -15,5 +15,5 @@ func NewSignature(r, s *big.Int) *Signature {
 }
 
 func (s *Signature) String() string {
-	return fmt.Sprintf("Signature(%x, %x)", s.R, s.S)
+	return fmt.Sprintf("Signature(%064x, %064x)", s.R, s.S)
 }

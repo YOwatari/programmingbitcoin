@@ -245,13 +245,14 @@ func ExampleChapter3_seven() {
 	k := big.NewInt(1234567890)
 	r := new(ecc.S256Point).RMul(ecc.G, k).X.(*ecc.FieldElement).Num
 	s := new(big.Int)
-	s.Add(z, new(big.Int).Mul(r, e)).Div(s, k).Mod(s, ecc.N)
+	invK := new(big.Int).Exp(k, new(big.Int).Sub(ecc.N, big.NewInt(2)), ecc.N)
+	s.Add(z, new(big.Int).Mul(r, e)).Mul(s, invK).Mod(s, ecc.N)
 	point := new(ecc.S256Point).RMul(ecc.G, e)
 	sig := ecc.NewSignature(r, s)
 	fmt.Printf("signature: %s\n", sig)
-	fmt.Printf("point: %x, %x\n", point.X.(*ecc.FieldElement).Num, point.Y.(*ecc.FieldElement).Num)
+	fmt.Printf("point: %064x, %064x\n", point.X.(*ecc.FieldElement).Num, point.Y.(*ecc.FieldElement).Num)
 
 	// Output:
-	// signature: Signature(2b698a0f0a4041b77e63488ad48c23e8e8838dd1fb7520408b121697b782ef22, 1c7503f6b9f17fc36be650986921fb7be5f028684a325e5133f6a7b26b99)
-	// point: f01d6b9018ab421dd410404cb869072065522bf85734008f105cf385a023a80f, eba29d0f0c5408ed681984dc525982abefccd9f7ff01dd26da4999cf3f6a295
+	// signature: Signature(2b698a0f0a4041b77e63488ad48c23e8e8838dd1fb7520408b121697b782ef22, 1dbc63bfef4416705e602a7b564161167076d8b20990a0f26f316cff2cb0bc1a)
+	// point: f01d6b9018ab421dd410404cb869072065522bf85734008f105cf385a023a80f, 0eba29d0f0c5408ed681984dc525982abefccd9f7ff01dd26da4999cf3f6a295
 }
