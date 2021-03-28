@@ -9,7 +9,6 @@ type FieldElement struct {
 	Num   *big.Int
 	Prime *big.Int
 	Err   error
-	isInf bool
 }
 
 func NewFieldElementFromInt64(num int64, prime int64) (*FieldElement, error) {
@@ -28,8 +27,11 @@ func (elm *FieldElement) String() string {
 }
 
 func (elm *FieldElement) Eq(other FieldInterface) bool {
-	elm2 := other.(*FieldElement)
-	return elm.Num.Cmp(elm2.Num) == 0 && elm.Prime.Cmp(elm2.Prime) == 0
+	if other == nil {
+		return false
+	}
+	o := other.(*FieldElement)
+	return elm.Num.Cmp(o.Num) == 0 && elm.Prime.Cmp(o.Prime) == 0
 }
 
 func (elm *FieldElement) Ne(other FieldInterface) bool {
@@ -41,90 +43,103 @@ func (elm *FieldElement) Calc() (FieldInterface, error) {
 }
 
 func (elm *FieldElement) Copy() FieldInterface {
-	return &FieldElement{Num: elm.Num, Prime: elm.Prime, Err: elm.Err, isInf: elm.isInf}
+	return &FieldElement{Num: elm.Num, Prime: elm.Prime, Err: elm.Err}
 }
 
-func (elm *FieldElement) IsInf() bool {
-	return elm.isInf
-}
-
-func (elm *FieldElement) Inf() {
-	elm.isInf = true
-}
-
-func (elm *FieldElement) Add(other FieldInterface) FieldInterface {
-	elm2 := other.(*FieldElement)
-	if elm.Prime.Cmp(elm2.Prime) != 0 {
-		elm.Err = fmt.Errorf("cannot add two numbers in different Fields")
+func (elm *FieldElement) Add(a, b FieldInterface) FieldInterface {
+	x, y := a.(*FieldElement), b.(*FieldElement)
+	if x.Prime.Cmp(y.Prime) != 0 {
+		*elm = FieldElement{
+			Num: elm.Num,
+			Prime: elm.Prime,
+			Err: fmt.Errorf("cannot add two numbers in different Fields"),
+		}
 		return elm
 	}
 
-	n := new(big.Int)
-	n.Add(elm.Num, elm2.Num).Mod(n, elm.Prime)
+	num := new(big.Int)
+	num.Add(x.Num, y.Num).Mod(num, x.Prime)
 
-	elm.Num = n
+	*elm = FieldElement{Num: num, Prime: x.Prime, Err: elm.Err}
 	return elm
 }
 
-func (elm *FieldElement) Sub(other FieldInterface) FieldInterface {
-	elm2 := other.(*FieldElement)
-	if elm.Prime.Cmp(elm2.Prime) != 0 {
-		elm.Err = fmt.Errorf("cannot sub two numbers in different Fields")
+func (elm *FieldElement) Sub(a, b FieldInterface) FieldInterface {
+	x, y := a.(*FieldElement), b.(*FieldElement)
+	if x.Prime.Cmp(y.Prime) != 0 {
+		*elm = FieldElement{
+			Num: elm.Num,
+			Prime: elm.Prime,
+			Err: fmt.Errorf("cannot sub two numbers in different Fields"),
+		}
 		return elm
 	}
 
-	n := new(big.Int)
-	n.Sub(elm.Num, elm2.Num).Mod(n, elm.Prime)
-	if n.Sign() < 0 {
-		n.Add(n, elm.Prime)
+	num := new(big.Int)
+	num.Sub(x.Num, y.Num).Mod(num, x.Prime)
+	if num.Sign() < 0 {
+		num.Add(num, x.Prime)
 	}
 
-	elm.Num = n
+	*elm = FieldElement{Num: num, Prime: x.Prime, Err: elm.Err}
 	return elm
 }
 
-func (elm *FieldElement) Mul(other FieldInterface) FieldInterface {
-	elm2 := other.(*FieldElement)
-	if elm.Prime.Cmp(elm2.Prime) != 0 {
-		elm.Err = fmt.Errorf("cannot multiply two numbers in different Fields")
+func (elm *FieldElement) Mul(a, b FieldInterface) FieldInterface {
+	x, y := a.(*FieldElement), b.(*FieldElement)
+	if x.Prime.Cmp(y.Prime) != 0 {
+		*elm = FieldElement{
+			Num: elm.Num,
+			Prime: elm.Prime,
+			Err: fmt.Errorf("cannot mul two numbers in different Fields"),
+		}
 		return elm
 	}
 
-	n := new(big.Int)
-	n.Mul(elm.Num, elm2.Num).Mod(n, elm.Prime)
+	num := new(big.Int)
+	num.Mul(x.Num, y.Num).Mod(num, x.Prime)
 
-	elm.Num = n
+	*elm = FieldElement{Num: num, Prime: x.Prime, Err: elm.Err}
 	return elm
 }
 
-func (elm *FieldElement) Div(other FieldInterface) FieldInterface {
-	elm2 := other.(*FieldElement)
-	if elm.Prime.Cmp(elm2.Prime) != 0 {
-		elm.Err = fmt.Errorf("cannot division two numbers in different Fields")
+func (elm *FieldElement) Div(a, b FieldInterface) FieldInterface {
+	x, y := a.(*FieldElement), b.(*FieldElement)
+	if x.Prime.Cmp(y.Prime) != 0 {
+		*elm = FieldElement{
+			Num:   elm.Num,
+			Prime: elm.Prime,
+			Err: fmt.Errorf("cannot division two numbers in different Fields"),
+		}
 		return elm
 	}
 
-	m := new(big.Int).Sub(elm2.Prime, big.NewInt(2))
-	return elm.Mul(elm2.Pow(m))
+	m := new(big.Int)
+	m.Sub(x.Prime, big.NewInt(2))
+	return x.Mul(x, y.Pow(y, m))
 }
 
-func (elm *FieldElement) Pow(exp *big.Int) FieldInterface {
-	m := new(big.Int).Div(elm.Prime, big.NewInt(1))
+func (elm *FieldElement) Pow(n FieldInterface, exp *big.Int) FieldInterface {
+	x := n.(*FieldElement)
+
+	m := new(big.Int)
 	e := new(big.Int)
-	e.Add(exp, m).Mod(e, m) // 0, p-2
+	m.Sub(x.Prime, big.NewInt(1))
+	e.Mod(exp, m)
 
-	n := new(big.Int)
-	n.Exp(elm.Num, e, elm.Prime)
+	num := new(big.Int)
+	num.Exp(x.Num, e, x.Prime)
 
-	elm.Num = n
+	*elm = FieldElement{Num: num, Prime: x.Prime, Err: elm.Err}
 	return elm
 }
 
-func (elm *FieldElement) RMul(coef *big.Int) FieldInterface {
-	n := new(big.Int)
-	c := new(big.Int).Mod(coef, elm.Prime)
-	n.Mul(elm.Num, c).Mod(n, elm.Prime)
+func (elm *FieldElement) RMul(n FieldInterface, coef *big.Int) FieldInterface {
+	x := n.(*FieldElement)
+	c := new(big.Int).Mod(coef, x.Prime)
+	num := new(big.Int)
+	num.Mul(x.Num, c).Mod(num, x.Prime)
 
-	elm.Num = n
+	*elm = FieldElement{Num: num, Prime: x.Prime, Err: elm.Err}
 	return elm
 }

@@ -9,13 +9,10 @@ type FieldInterface interface {
 	Calc() (FieldInterface, error)
 	Copy() FieldInterface
 
-	IsInf() bool
-	Inf()
-
-	Add(other FieldInterface) FieldInterface
-	Sub(other FieldInterface) FieldInterface
-	Mul(other FieldInterface) FieldInterface
-	Div(other FieldInterface) FieldInterface
-	Pow(exp *big.Int) FieldInterface
-	RMul(coef *big.Int) FieldInterface
+	Add(a, b FieldInterface) FieldInterface
+	Sub(a, b FieldInterface) FieldInterface
+	Mul(a, b FieldInterface) FieldInterface
+	Div(a, b FieldInterface) FieldInterface
+	Pow(n FieldInterface, exp *big.Int) FieldInterface
+	RMul(n FieldInterface, coef *big.Int) FieldInterface
 }

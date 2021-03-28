@@ -68,6 +68,7 @@ func ExampleChapter3_two() {
 		x1, _ := ecc.NewFieldElementFromInt64(c.a.x, prime)
 		y2, _ := ecc.NewFieldElementFromInt64(c.b.y, prime)
 		x2, _ := ecc.NewFieldElementFromInt64(c.b.x, prime)
+
 		p1, err := ecc.NewPoint(x1, y1, a, b)
 		if err != nil {
 			panic(err)
@@ -77,7 +78,8 @@ func ExampleChapter3_two() {
 			panic(err)
 		}
 
-		p, err := p1.Copy().Add(p2).Calc()
+		p := new(ecc.Point)
+		p, err = p.Add(p1, p2).Calc()
 		if err != nil {
 			panic(err)
 		}
@@ -122,21 +124,21 @@ func ExampleChapter3_four() {
 	}
 
 	for _, c := range cases {
-		ansY, _ := ecc.NewFieldElementFromInt64(c.y, prime)
-		ansX, _ := ecc.NewFieldElementFromInt64(c.x, prime)
-		ansP, _ := ecc.NewPoint(ansX, ansY, a, b)
+		ry, _ := ecc.NewFieldElementFromInt64(c.y, prime)
+		rx, _ := ecc.NewFieldElementFromInt64(c.x, prime)
+		result, _ := ecc.NewPoint(rx, ry, a, b)
 		for i := 0; i < c.n - 1; i++ {
 			y, _ := ecc.NewFieldElementFromInt64(c.y, prime)
 			x, _ := ecc.NewFieldElementFromInt64(c.x, prime)
 			p, _ := ecc.NewPoint(x, y, a, b)
-			ansP = ansP.Copy().Add(p)
+			result.Add(result, p)
 		}
-		p, err := ansP.Calc()
+		p, err := result.Calc()
 		if err != nil {
 			panic(err)
 		}
 
-		if p.X.IsInf() || p.Y.IsInf() {
+		if p.X == nil || p.Y == nil {
 			fmt.Printf("%d * (%d, %d) = %s\n", c.n, c.x, c.y, p)
 		} else {
 			fmt.Printf("%d * (%d, %d) = Point(%d, %d)\n", c.n, c.x, c.y, p.X.(*ecc.FieldElement).Num, p.Y.(*ecc.FieldElement).Num)
@@ -160,16 +162,16 @@ func ExampleChapter3_five()  {
 	y, _ := ecc.NewFieldElementFromInt64(86, prime)
 	p, _ := ecc.NewPoint(x, y, a, b)
 
-	ansP := p.Copy()
-	inf := p.Copy().Inf()
+	result, _ := ecc.NewPoint(x, y, a, b)
+	inf := &ecc.Point{X: nil, Y: nil, A: a, B: b}
 
 	n := 1
-	for ansP.Ne(inf) {
-		ansP.Add(p)
+	for result.Ne(inf) {
+		result.Add(result, p)
 		n++
 	}
 
-	_, err := ansP.Calc()
+	_, err := result.Calc()
 	if err != nil {
 		panic(err)
 	}

@@ -2,7 +2,6 @@ package ecc_test
 
 import (
 	"fmt"
-	"math"
 	"math/big"
 	"testing"
 
@@ -153,7 +152,6 @@ func TestPoint_Ne(t *testing.T) {
 func TestPoint_Add(t *testing.T) {
 	a := int64(5)
 	b := int64(7)
-	inf := _NewExampleIntegerPoint(-1, -1, a, b).Inf()
 
 	cases := []struct {
 		p1       *ecc.Point
@@ -162,18 +160,18 @@ func TestPoint_Add(t *testing.T) {
 	}{
 		{
 			_NewExampleIntegerPoint(-1, -1, a, b),
-			inf.Copy(),
+			&ecc.Point{X: nil, Y: nil, A: NewExampleInteger(a), B: NewExampleInteger(b)},
 			_NewExampleIntegerPoint(-1, -1, a, b),
 		},
 		{
-			inf.Copy(),
+			&ecc.Point{X: nil, Y: nil, A: NewExampleInteger(a), B: NewExampleInteger(b)},
 			_NewExampleIntegerPoint(-1, -1, a, b),
 			_NewExampleIntegerPoint(-1, -1, a, b),
 		},
 		{
 			_NewExampleIntegerPoint(-1, -1, a, b),
 			_NewExampleIntegerPoint(-1, 1, a, b),
-			inf.Copy(),
+			&ecc.Point{X: nil, Y: nil, A: NewExampleInteger(a), B: NewExampleInteger(b)},
 		},
 		{
 			_NewExampleIntegerPoint(2, 5, a, b),
@@ -189,7 +187,7 @@ func TestPoint_Add(t *testing.T) {
 
 	for i, c := range cases {
 		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
-			actual, err := c.p1.Add(c.p2).Calc()
+			actual, err := c.p1.Add(c.p1, c.p2).Calc()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -281,7 +279,7 @@ func TestPoint_Add_FieldElement(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			actual, err := p1.Copy().Add(p2).Calc()
+			actual, err := p1.Add(p1, p2).Calc()
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -299,15 +297,14 @@ func TestPoint_RMul(t *testing.T) {
 	b, _ := ecc.NewFieldElementFromInt64(7, prime)
 	x, _ := ecc.NewFieldElementFromInt64(15, prime)
 	y, _ := ecc.NewFieldElementFromInt64(86, prime)
-	expected := &ecc.Point{X: x, Y: y, A: a, B: b}
-	expected = expected.Inf()
+	expected := &ecc.Point{X: nil, Y: nil, A: a, B: b}
 
 	p, err := ecc.NewPoint(x, y, a, b)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	actual, err := p.RMul(big.NewInt(7)).Calc()
+	actual, err := p.RMul(p, big.NewInt(7)).Calc()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -330,14 +327,13 @@ func BenchmarkPoint_RMul(b *testing.B) {
 
 	n := new(big.Int).Lsh(big.NewInt(1), 40)
 	b.ResetTimer()
-	if _, err := p.RMul(n).Calc(); err != nil {
+	if _, err := p.RMul(p, n).Calc(); err != nil {
 		b.Fatal(err)
 	}
 }
 
 type ExampleInteger struct {
 	Num int64
-	isInf bool
 }
 
 func NewExampleInteger(n int64) *ExampleInteger {
@@ -358,48 +354,44 @@ func (i *ExampleInteger) Calc() (ecc.FieldInterface, error) {
 }
 
 func (i *ExampleInteger) Copy() ecc.FieldInterface {
-	return &ExampleInteger{Num: i.Num, isInf: i.isInf}
+	return &ExampleInteger{Num: i.Num}
 }
 
-func (i *ExampleInteger) IsInf() bool {
-	return i.isInf
-}
-
-func (i *ExampleInteger) Inf() {
-	i.isInf = true
-}
-
-func (i *ExampleInteger) Add(other ecc.FieldInterface) ecc.FieldInterface {
-	o := other.(*ExampleInteger)
-	*i = ExampleInteger{Num: i.Num + o.Num}
+func (i *ExampleInteger) Add(a, b ecc.FieldInterface) ecc.FieldInterface {
+	x, y := a.(*ExampleInteger), b.(*ExampleInteger)
+	*i = ExampleInteger{Num: x.Num + y.Num}
 	return i
 }
 
-func (i *ExampleInteger) Sub(other ecc.FieldInterface) ecc.FieldInterface {
-	o := other.(*ExampleInteger)
-	*i = ExampleInteger{Num: i.Num - o.Num}
+func (i *ExampleInteger) Sub(a, b ecc.FieldInterface) ecc.FieldInterface {
+	x, y := a.(*ExampleInteger), b.(*ExampleInteger)
+	*i = ExampleInteger{Num: x.Num - y.Num}
 	return i
 }
 
-func (i *ExampleInteger) Mul(other ecc.FieldInterface) ecc.FieldInterface {
-	o := other.(*ExampleInteger)
-	*i = ExampleInteger{Num: i.Num * o.Num}
+func (i *ExampleInteger) Mul(a, b ecc.FieldInterface) ecc.FieldInterface {
+	x, y := a.(*ExampleInteger), b.(*ExampleInteger)
+	*i = ExampleInteger{Num: x.Num * y.Num}
 	return i
 }
 
-func (i *ExampleInteger) Div(other ecc.FieldInterface) ecc.FieldInterface {
-	o := other.(*ExampleInteger)
-	*i = ExampleInteger{Num: i.Num / o.Num}
+func (i *ExampleInteger) Div(a, b ecc.FieldInterface) ecc.FieldInterface {
+	x, y := a.(*ExampleInteger), b.(*ExampleInteger)
+	*i = ExampleInteger{Num: x.Num / y.Num}
 	return i
 }
 
-func (i *ExampleInteger) Pow(exp *big.Int) ecc.FieldInterface {
-	*i = ExampleInteger{Num: int64(math.Pow(float64(i.Num), float64(exp.Int64())))}
+func (i *ExampleInteger) Pow(n ecc.FieldInterface, exp *big.Int) ecc.FieldInterface {
+	x := n.(*ExampleInteger)
+	result := new(big.Int)
+	result.Exp(big.NewInt(x.Num), exp, nil)
+	*i = ExampleInteger{Num: result.Int64()}
 	return i
 }
 
-func (i *ExampleInteger) RMul(c *big.Int) ecc.FieldInterface {
-	*i = ExampleInteger{Num: i.Num * c.Int64()}
+func (i *ExampleInteger) RMul(n ecc.FieldInterface, c *big.Int) ecc.FieldInterface {
+	x := n.(*ExampleInteger)
+	*i = ExampleInteger{Num: x.Num * c.Int64()}
 	return i
 }
 

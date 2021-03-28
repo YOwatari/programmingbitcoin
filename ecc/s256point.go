@@ -46,5 +46,5 @@ func NewS256PointFromBigInt(x *big.Int, y *big.Int) (*S256Point, error) {
 
 func (p *S256Point) RMul(coef *big.Int) *S256Point {
 	c := new(big.Int).Mod(coef, N())
-	return &S256Point{p.Point.RMul(c)}
+	return &S256Point{p.Point.RMul(p.Point, c)}
 }
