@@ -28,3 +28,10 @@ func NewS256Field(num *big.Int) (*S256Field, error) {
 func (f *S256Field) String() string {
 	return fmt.Sprintf("%064d", f.Num)
 }
+
+func (f *S256Field) Sqrt() *S256Field {
+	e := new(big.Int)
+	e.Add(f.Prime, big.NewInt(1)).Div(e, big.NewInt(4))
+	result := f.Copy()
+	return result.Pow(result, e).(*S256Field)
+}

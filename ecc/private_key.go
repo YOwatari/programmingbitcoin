@@ -22,7 +22,7 @@ func (key *PrivateKey) Hex() string {
 }
 
 func (key *PrivateKey) Sign(z *big.Int) *Signature {
-	k := key.DeterministicK(z)
+	k := key.deterministicK(z)
 	r := new(S256Point).RMul(G, k).X.(*FieldElement).Num
 	invK := new(big.Int).Exp(k, new(big.Int).Sub(N, big.NewInt(2)), N)
 	s := new(big.Int)
@@ -33,7 +33,7 @@ func (key *PrivateKey) Sign(z *big.Int) *Signature {
 	return NewSignature(r, s)
 }
 
-func (key *PrivateKey) DeterministicK(z *big.Int) *big.Int {
+func (key *PrivateKey) deterministicK(z *big.Int) *big.Int {
 	k := bytes.Repeat([]byte{0x00}, 32)
 	v := bytes.Repeat([]byte{0x01}, 32)
 

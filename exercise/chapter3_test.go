@@ -2,7 +2,6 @@ package exercise_test
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 
@@ -235,8 +234,7 @@ func ExampleChapter3_seven() {
 	getHash := func(s string) *big.Int {
 		r1 := sha256.Sum256([]byte(s))
 		r2 := sha256.Sum256(r1[:])
-		result, _ := new(big.Int).SetString(hex.EncodeToString(r2[:]), 16)
-		return result
+		return new(big.Int).SetBytes(r2[:])
 	}
 
 	e := big.NewInt(12345)
