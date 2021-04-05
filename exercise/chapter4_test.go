@@ -40,3 +40,13 @@ func ExampleChapter4_two() {
 	// 02933ec2d2b111b92737ec12f1c5d20f3233a0ad21cd8b36d0bca7a0cfa5cb8701
 	// 0296be5b1292f6c856b3c5654e886fc13511462059089cdf9c479623bfcbe77690
 }
+
+func ExampleChapter4_three() {
+	r, _ := new(big.Int).SetString("37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6", 16)
+	s, _ := new(big.Int).SetString("8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec", 16)
+	sec := ecc.NewSignature(r, s)
+	fmt.Printf("%x", sec.Der())
+
+	// Output:
+	// 3045022037206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c60221008ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec
+}

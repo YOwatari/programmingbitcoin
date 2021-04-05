@@ -1,6 +1,8 @@
 package ecc_test
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"testing"
@@ -17,12 +19,12 @@ func TestS256Point_Verify(t *testing.T) {
 	}
 	t.Logf("point: %s", p)
 
-	cases := []struct{
-		z string
-		r string
-		s string
+	cases := []struct {
+		z        string
+		r        string
+		s        string
 		expected bool
-	} {
+	}{
 		{
 			"ec208baa0fc1c19f708a9ca96fdeff3ac3f230bb4a7ba4aede4942ad003c0f60",
 			"ac8d1c87e51d0d441be8b3dd5b05c8795b48875dffe00b7ffcfac23010d3a395",
@@ -48,5 +50,19 @@ func TestS256Point_Verify(t *testing.T) {
 				t.Errorf("\ngot: %t\nwant: %t\n\nsig: %s", actual, c.expected, sig)
 			}
 		})
+	}
+}
+
+func TestSignature_Der(t *testing.T) {
+	r, _ := new(big.Int).SetString("37206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c6", 16)
+	s, _ := new(big.Int).SetString("8ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec", 16)
+	sec := ecc.NewSignature(r, s)
+	actual := sec.Der()
+	expected, err := hex.DecodeString("3045022037206a0610995c58074999cb9767b87af4c4978db68c06e8e6e81d282047a7c60221008ca63759c1157ebeaec0d03cecca119fc9a75bf8e6d0fa65c841c8e2738cdaec")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(actual, expected) {
+		t.Errorf("Signiture DER format diff\n got: %x\nwant: %x", actual, expected)
 	}
 }
