@@ -63,3 +63,41 @@ func TestS256Point_Sec(t *testing.T) {
 		})
 	}
 }
+
+func TestS256Point_Address(t *testing.T) {
+	cases := []struct{
+		secret int64
+		compress bool
+		testnet bool
+		expected string
+	} {
+		{
+			5002,
+			false,
+			true,
+			"mmTPbXQFxboEtNRkwfh6K51jvdtHLxGeMA",
+		},
+		{
+			0x777c6b16216400,
+			true,
+			true,
+			"mopVkxp8UhXqRYbCYJsbeE1h1fiF64jcoH",
+		},
+		{
+			0x12345deadbeef,
+			true,
+			false,
+			"1F1Pn2y6pDb68E5nYJJeba4TLg2U7B6KF1",
+		},
+	}
+
+	for i, c := range cases {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
+			key := ecc.NewPrivateKey(big.NewInt(c.secret))
+			actual := key.Point.Address(c.compress, c.testnet)
+			if actual != c.expected {
+				t.Errorf("adress diff:\n got: %s\nwant: %s", actual, c.expected)
+			}
+		})
+	}
+}

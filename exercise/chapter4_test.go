@@ -3,10 +3,10 @@ package exercise
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/YOwatari/programmingbitcoin/helper"
 	"math/big"
 
 	"github.com/YOwatari/programmingbitcoin/ecc"
+	"github.com/YOwatari/programmingbitcoin/helper"
 )
 
 func ExampleChapter4_one() {
@@ -85,7 +85,7 @@ func ExampleChapter4_five() {
 			true,
 		},
 		{
-			0x777c6b16216400,
+			0x777c6b16216400, // 2020^5
 			true,
 			true,
 		},
