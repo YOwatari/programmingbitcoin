@@ -1,15 +1,16 @@
-package ecc_test
+package helper_test
 
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/YOwatari/programmingbitcoin/ecc"
 	"testing"
+
+	"github.com/YOwatari/programmingbitcoin/helper"
 )
 
 func TestEncodeBase58(t *testing.T) {
 	cases := []struct {
-		hex string
+		hex      string
 		expected string
 	}{
 		{
@@ -32,7 +33,7 @@ func TestEncodeBase58(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			actual := ecc.EncodeBase58(b)
+			actual := helper.EncodeBase58(b)
 			if actual != c.expected {
 				t.Errorf("base58 diff\n got: %s\nwant: %s", actual, c.expected)
 			}

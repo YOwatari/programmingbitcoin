@@ -2,6 +2,7 @@ package ecc
 
 import (
 	"bytes"
+	"github.com/YOwatari/programmingbitcoin/helper"
 	"math/big"
 )
 
@@ -101,6 +102,21 @@ func (p *S256Point) Sec(compress bool) []byte {
 		return []byte{}
 	}
 	return b.Bytes()
+}
+
+func (p *S256Point) Hash160(compress bool) []byte {
+	return helper.Hash160(p.Sec(compress))
+}
+
+func (p *S256Point) Address(compress, testnet bool) string {
+	h160 :=  p.Hash160(compress)
+	prefix := make([]byte, 1)
+	if testnet {
+		prefix = []byte{0x6f}
+	} else {
+		prefix = []byte{0x00}
+	}
+	return helper.EncodeBase58Checksum(append(prefix, h160...))
 }
 
 func ParseS256Point(b []byte) (*S256Point, error) {

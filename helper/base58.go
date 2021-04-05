@@ -1,4 +1,4 @@
-package ecc
+package helper
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	_Base58Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+	_Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 )
 
 func EncodeBase58(b []byte) string {
@@ -21,7 +21,7 @@ func EncodeBase58(b []byte) string {
 	}
 
 	var buf bytes.Buffer
-	alphabet := []byte(_Base58Alphabet)
+	alphabet := []byte(_Alphabet)
 	num := new(big.Int).SetBytes(b)
 	mod := new(big.Int)
 	for num.Sign() > 0 {
@@ -34,4 +34,8 @@ func EncodeBase58(b []byte) string {
 		result = result + string(buf.Bytes()[i])
 	}
 	return result
+}
+
+func EncodeBase58Checksum(b []byte) string {
+	return EncodeBase58(append(b, Hash256(b)[:4]...))
 }

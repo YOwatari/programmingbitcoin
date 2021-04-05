@@ -3,6 +3,7 @@ package exercise
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/YOwatari/programmingbitcoin/helper"
 	"math/big"
 
 	"github.com/YOwatari/programmingbitcoin/ecc"
@@ -63,11 +64,44 @@ func ExampleChapter4_four() {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(ecc.EncodeBase58(b))
+		fmt.Println(helper.EncodeBase58(b))
 	}
 
 	// Output:
 	// 9MA8fRQrT4u8Zj8ZRd6MAiiyaxb2Y1CMpvVkHQu5hVM6
 	// 4fE3H2E6XMp4SsxtwinF7w9a34ooUrwWe4WsW1458Pd
 	// EQJsjkd6JaGwxrjEhfeqPenqHwrBmPQZjJGNSCHBkcF7
+}
+
+func ExampleChapter4_five() {
+	ins := []struct{
+		secret int64
+		compress bool
+		testnet bool
+	} {
+		{
+			5002,
+			false,
+			true,
+		},
+		{
+			0x777c6b16216400,
+			true,
+			true,
+		},
+		{
+			0x12345deadbeef,
+			true,
+			false,
+		},
+	}
+	for _, in := range ins {
+		key :=  ecc.NewPrivateKey(big.NewInt(in.secret))
+		fmt.Println(key.Point.Address(in.compress, in.testnet))
+	}
+
+	// Output:
+	// mmTPbXQFxboEtNRkwfh6K51jvdtHLxGeMA
+	// mopVkxp8UhXqRYbCYJsbeE1h1fiF64jcoH
+	// 1F1Pn2y6pDb68E5nYJJeba4TLg2U7B6KF1
 }
