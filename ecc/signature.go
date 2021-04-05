@@ -7,6 +7,11 @@ import (
 	"math/big"
 )
 
+const (
+	_DERMarkerStart     byte = 0x30
+	_DERMarkerDelimiter byte = 0x02
+)
+
 type Signature struct {
 	R *big.Int
 	S *big.Int
@@ -27,7 +32,7 @@ func (s *Signature) Der() []byte {
 	if rb[0]&0x80 > 0 {
 		rb = append([]byte{0x00}, rb...)
 	}
-	body.Write([]byte{0x02})
+	body.WriteByte(_DERMarkerDelimiter)
 	binary.Write(&body, binary.BigEndian, uint8(len(rb)))
 	body.Write(rb)
 
@@ -35,12 +40,12 @@ func (s *Signature) Der() []byte {
 	if sb[0]&0x80 > 0 {
 		sb = append([]byte{0x00}, sb...)
 	}
-	body.Write([]byte{0x02})
+	body.WriteByte(_DERMarkerDelimiter)
 	binary.Write(&body, binary.BigEndian, uint8(len(sb)))
 	body.Write(sb)
 
 	var h bytes.Buffer
-	h.Write([]byte{0x30})
+	h.WriteByte(_DERMarkerStart)
 	binary.Write(&h, binary.BigEndian, uint8(body.Len()))
 	h.Write(body.Bytes())
 

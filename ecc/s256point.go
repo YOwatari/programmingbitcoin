@@ -7,9 +7,11 @@ import (
 )
 
 const (
-	SecPrefixUncompress   = 0x04
-	SecPrefixCompressEven = 0x02
-	SecPrefixCompressOdd  = 0x03
+	_SECPrefixUncompress   byte = 0x04
+	_SECPrefixCompressEven byte = 0x02
+	_SECPrefixCompressOdd  byte = 0x03
+	_AddressPrefixMainnet  byte = 0x00
+	_AddressPrefixTestnet  byte = 0x6f
 )
 
 var (
@@ -82,9 +84,9 @@ func (p *S256Point) Sec(compress bool) []byte {
 	var b bytes.Buffer
 	if compress {
 		if p.Y.(*FieldElement).Num.Bit(0) == 0 {
-			b.Write([]byte{SecPrefixCompressEven})
+			b.WriteByte(_SECPrefixCompressEven)
 		} else {
-			b.Write([]byte{SecPrefixCompressOdd})
+			b.WriteByte(_SECPrefixCompressOdd)
 		}
 		b.Write(p.X.(*FieldElement).Num.Bytes())
 
@@ -94,12 +96,12 @@ func (p *S256Point) Sec(compress bool) []byte {
 		return b.Bytes()
 	}
 
-	b.Write([]byte{SecPrefixUncompress})
+	b.WriteByte(_SECPrefixUncompress)
 	b.Write(p.X.(*FieldElement).Num.Bytes())
 	b.Write(p.Y.(*FieldElement).Num.Bytes())
 
 	if b.Len() != 65 {
-		return []byte{}
+		return nil
 	}
 	return b.Bytes()
 }
@@ -109,18 +111,15 @@ func (p *S256Point) Hash160(compress bool) []byte {
 }
 
 func (p *S256Point) Address(compress, testnet bool) string {
-	h160 :=  p.Hash160(compress)
-	prefix := make([]byte, 1)
+	h160 := p.Hash160(compress)
 	if testnet {
-		prefix = []byte{0x6f}
-	} else {
-		prefix = []byte{0x00}
+		return helper.EncodeBase58Checksum(append([]byte{_AddressPrefixTestnet}, h160...))
 	}
-	return helper.EncodeBase58Checksum(append(prefix, h160...))
+	return helper.EncodeBase58Checksum(append([]byte{_AddressPrefixMainnet}, h160...))
 }
 
 func ParseS256Point(b []byte) (*S256Point, error) {
-	if b[0] == SecPrefixUncompress {
+	if b[0] == _SECPrefixUncompress {
 		x := new(big.Int).SetBytes(b[1:33])
 		y := new(big.Int).SetBytes(b[33:65])
 		return NewS256PointFromBigInt(x, y)
@@ -149,7 +148,7 @@ func ParseS256Point(b []byte) (*S256Point, error) {
 		odd = beta
 	}
 
-	if b[0] == SecPrefixCompressEven {
+	if b[0] == _SECPrefixCompressEven {
 		return NewS256Point(x, even)
 	} else {
 		return NewS256Point(x, odd)
