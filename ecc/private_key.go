@@ -6,11 +6,19 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+
+	"github.com/YOwatari/programmingbitcoin/helper"
+)
+
+const (
+	_WIFPrefixMainnet  byte = 0x80
+	_WIFPrefixTestnet  byte = 0xef
+	_WIFSuffixCompress byte = 0x01
 )
 
 type PrivateKey struct {
 	Secret *big.Int
-	Point *S256Point
+	Point  *S256Point
 }
 
 func NewPrivateKey(secret *big.Int) *PrivateKey {
@@ -41,15 +49,8 @@ func (key *PrivateKey) deterministicK(z *big.Int) *big.Int {
 		z.Sub(z, N)
 	}
 
-	_int2bytes := func(n *big.Int) []byte {
-		size := 32
-		raw := n.Bytes()
-		result := make([]byte, size)
-		copy(result[size - len(raw):], raw) // len(raw) < size
-		return result
-	}
-	zb := _int2bytes(z)
-	sb := _int2bytes(key.Secret)
+	zb := int2bytes(z)
+	sb := int2bytes(key.Secret)
 
 	_hmac := func(k []byte, values ...[]byte) []byte {
 		h := hmac.New(sha256.New, k)
@@ -75,4 +76,26 @@ func (key *PrivateKey) deterministicK(z *big.Int) *big.Int {
 		v = _hmac(k, v)
 	}
 	return candidate
+}
+
+func (key *PrivateKey) Wif(compress, testnet bool) string {
+	var b bytes.Buffer
+	if testnet {
+		b.WriteByte(_WIFPrefixTestnet)
+	} else {
+		b.WriteByte(_WIFPrefixMainnet)
+	}
+	b.Write(int2bytes(key.Secret))
+	if compress {
+		b.WriteByte(_WIFSuffixCompress)
+	}
+	return helper.EncodeBase58Checksum(b.Bytes())
+}
+
+func int2bytes(n *big.Int) []byte {
+	size := 32
+	raw := n.Bytes()
+	result := make([]byte, size)
+	copy(result[size-len(raw):], raw)
+	return result
 }

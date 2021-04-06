@@ -111,11 +111,14 @@ func (p *S256Point) Hash160(compress bool) []byte {
 }
 
 func (p *S256Point) Address(compress, testnet bool) string {
-	h160 := p.Hash160(compress)
+	var b bytes.Buffer
 	if testnet {
-		return helper.EncodeBase58Checksum(append([]byte{_AddressPrefixTestnet}, h160...))
+		b.WriteByte(_AddressPrefixTestnet)
+	} else {
+		b.WriteByte(_AddressPrefixMainnet)
 	}
-	return helper.EncodeBase58Checksum(append([]byte{_AddressPrefixMainnet}, h160...))
+	b.Write(p.Hash160(compress))
+	return helper.EncodeBase58Checksum(b.Bytes())
 }
 
 func ParseS256Point(b []byte) (*S256Point, error) {

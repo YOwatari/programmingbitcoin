@@ -105,3 +105,37 @@ func ExampleChapter4_five() {
 	// mopVkxp8UhXqRYbCYJsbeE1h1fiF64jcoH
 	// 1F1Pn2y6pDb68E5nYJJeba4TLg2U7B6KF1
 }
+
+func ExampleChapter4_six() {
+	ins := []struct{
+		secret int64
+		compress bool
+		testnet bool
+	} {
+		{
+			5003,
+			true,
+			true,
+		},
+		{
+			0x77c8350c02b595, // 2021^5
+			false,
+			true,
+		},
+		{
+			0x54321deadbeef,
+			true,
+			false,
+		},
+	}
+
+	for _, in := range ins {
+		key := ecc.NewPrivateKey(big.NewInt(in.secret))
+		fmt.Println(key.Wif(in.compress, in.testnet))
+	}
+
+	// Output:
+	// cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN8rFTv2sfUK
+	// 91avARGdfge8E4tZfYLoxeJ5sGBdNJQH4kvjpWAxgzczjbCwxic
+	// KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgiuQJv1h8Ytr2S53a
+}

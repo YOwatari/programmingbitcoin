@@ -44,10 +44,10 @@ func (s *Signature) Der() []byte {
 	binary.Write(&body, binary.BigEndian, uint8(len(sb)))
 	body.Write(sb)
 
-	var h bytes.Buffer
-	h.WriteByte(_DERMarkerStart)
-	binary.Write(&h, binary.BigEndian, uint8(body.Len()))
-	h.Write(body.Bytes())
+	var result bytes.Buffer
+	result.WriteByte(_DERMarkerStart)
+	binary.Write(&result, binary.BigEndian, uint8(body.Len()))
+	result.Write(body.Bytes())
 
-	return h.Bytes()
+	return result.Bytes()
 }
