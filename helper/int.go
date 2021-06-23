@@ -30,7 +30,23 @@ func LittleEndianToInt64(b []byte) int64 {
 	return result
 }
 
-func Int64ToLittleEndian(n int64) []byte {
+func Uint64ToLittleEndian(n uint64) []byte {
+	b := new(bytes.Buffer)
+	if err := binary.Write(b, binary.LittleEndian, &n); err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+func Uint32ToLittleEndian(n uint32) []byte {
+	b := new(bytes.Buffer)
+	if err := binary.Write(b, binary.LittleEndian, &n); err != nil {
+		panic(err)
+	}
+	return b.Bytes()
+}
+
+func Uint16ToLittleEndian(n uint16) []byte {
 	b := new(bytes.Buffer)
 	if err := binary.Write(b, binary.LittleEndian, &n); err != nil {
 		panic(err)
